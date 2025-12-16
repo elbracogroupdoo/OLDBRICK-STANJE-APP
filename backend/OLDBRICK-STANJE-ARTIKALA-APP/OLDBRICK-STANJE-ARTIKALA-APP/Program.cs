@@ -112,11 +112,30 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP
             // Add services to the container.
 
             builder.Services.AddControllers();
+
+            var corsPolicyName = "FrontendCors";
+
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy(corsPolicyName, policy =>
+                {
+                    policy.WithOrigins("http://localhost:5173")
+                    .AllowAnyHeader()
+                   
+                    .AllowAnyMethod();
+                });
+            });
+
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
+
+
+            app.UseHttpsRedirection();
+
+            app.UseCors(corsPolicyName);
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -125,7 +144,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            
 
             app.UseAuthentication();
 

@@ -1,21 +1,9 @@
-import axios from "axios";
+import httpClient from "./httpClient";
+import { setToken } from "./tokenStorage";
 
-const API_BASE_URL = "http://localhost:5173";
-
-const TOKEN_KEY = "token";
-
-function getToken() {
-    localStorage.getItem(TOKEN_KEY);
-}
-function setToken(token){
-    localStorage.setItem(TOKEN_KEY, token);
-}
-function removeToken() {
-    localStorage.removeItem(TOKEN_KEY);
-}
 
 async function login(credentials){
-    var response = await axios.post(API_BASE_URL + "/api/auth/login", {
+    var response = await httpClient.post("/api/auth/login", {
         username: credentials.username,
         password: credentials.password
     });
@@ -32,14 +20,11 @@ async function login(credentials){
 }
 
 async function registerUser(payload) {
-  var response = await axios.post(API_BASE_URL + "/api/users", payload);
+  var response = await httpClient.post("/api/users", payload);
   return response.data;
 }
 
 export {
   login,
-  registerUser,
-  getToken,
-  setToken,
-  removeToken,
+  registerUser
 };
