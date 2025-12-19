@@ -5,6 +5,6 @@
         public int IdNaloga { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateOnly Datum {  get; set; }
-        public decimal Prosuto { get; set; }
+        public float Prosuto { get; set; }
     }
 }

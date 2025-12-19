@@ -32,7 +32,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
             var dailyReport = new DailyReport
             {
                 Datum = datum,
-                Prosuto = 0m // decimalan broj 
+                Prosuto = 0 
             };
 
             _context.DailyReports.Add(dailyReport);

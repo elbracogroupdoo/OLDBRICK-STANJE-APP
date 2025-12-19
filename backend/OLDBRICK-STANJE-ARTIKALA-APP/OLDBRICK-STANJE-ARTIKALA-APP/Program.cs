@@ -10,6 +10,7 @@ using OLDBRICK_STANJE_ARTIKALA_APP.Services.User;
 using Microsoft.OpenApi.Models;
 using OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices;
 using OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports;
+using OLDBRICK_STANJE_ARTIKALA_APP.Custom_items;
 
 namespace OLDBRICK_STANJE_ARTIKALA_APP
 {
@@ -18,6 +19,14 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services
+                .AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.Converters.Add(new FloatConverter());
+                });
+
 
             var cs = builder.Configuration.GetConnectionString("DefaultConnection");
             Console.WriteLine("CS: " + cs?.Replace("Password=", "Password=***"));
@@ -86,6 +95,10 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<IBeerService, BeerService>();
             builder.Services.AddScoped<IDailyReportService, DailyReportService>();
+            builder.Services.AddScoped<IDailyBeerStateService, DailyBeerStateService>();
+            builder.Services.AddScoped<IProsutoService, ProsutoService>();
+            
+
 
             builder.Services.AddAuthentication(options =>
             {

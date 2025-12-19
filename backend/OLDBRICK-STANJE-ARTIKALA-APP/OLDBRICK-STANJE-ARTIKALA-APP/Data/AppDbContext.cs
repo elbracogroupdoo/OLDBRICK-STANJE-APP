@@ -14,6 +14,8 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Data
 
         public DbSet<DailyReport> DailyReports => Set<DailyReport>();
 
+        public DbSet<DailyBeerState> DailyBeerStates => Set<DailyBeerState>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Users>(e =>
@@ -52,6 +54,29 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Data
                 .ValueGeneratedOnAdd();
                 e.Property(e => e.Datum).HasColumnName("datum");
                 e.Property(e => e.Prosuto).HasColumnName("prosuto");
+            });
+
+            modelBuilder.Entity<DailyBeerState>(e =>
+            {
+                e.ToTable("TAB3");
+                e.HasKey(e => e.IdStanja);
+
+                e.Property(e => e.IdStanja).HasColumnName("id_stanja");
+
+                e.Property(e => e.CreatedAt)
+                    .HasColumnName("created_at")
+                    .HasDefaultValueSql("now()")
+                    .ValueGeneratedOnAdd();
+
+                e.Property(e => e.IdNaloga).HasColumnName("id_naloga");
+                e.Property(e => e.IdPiva).HasColumnName("id_piva");
+
+                e.Property(e => e.Izmereno).HasColumnName("izmereno");
+                e.Property(e => e.StanjeUProgramu).HasColumnName("stanje_u_programu");
+
+                // preporuka (nije obavezno za start, ali je dobra):
+                e.HasIndex(e => new { e.IdNaloga, e.IdPiva }).IsUnique();
+
             });
         }
     }
