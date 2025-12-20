@@ -2,6 +2,7 @@
 using OLDBRICK_STANJE_ARTIKALA_APP.Data;
 using OLDBRICK_STANJE_ARTIKALA_APP.DTOs.Beers;
 using OLDBRICK_STANJE_ARTIKALA_APP.DTOs.DailyReports;
+using OLDBRICK_STANJE_ARTIKALA_APP.Entities;
 
 namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
 {
@@ -99,10 +100,80 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
 
         public async Task<ProsutoResultDto> GetAllStatesByIdNaloga(int idNaloga)
         {
-            var AllStatesByIdNaloga = await _context.DailyBeerStates
-                .Where(s => s.IdNaloga == idNaloga)
-                .ToListAsync();
-            throw new NotImplementedException();
+            var currentStates = await _context.DailyBeerStates
+        .Where(s => s.IdNaloga == idNaloga)
+        .ToListAsync();
+
+            var prevReport = await _context.DailyReports
+                .Where(r => r.IdNaloga < idNaloga)
+                .OrderByDescending(r => r.IdNaloga)
+                .FirstOrDefaultAsync();
+
+            var prevStates = prevReport == null
+                ? new List<DailyBeerState>()
+                : await _context.DailyBeerStates
+                    .Where(s => s.IdNaloga == prevReport.IdNaloga)
+                    .ToListAsync();
+
+            var items = new List<BeerCalcResultDto>();
+
+            foreach (var current in currentStates)
+            {
+                // Prethodno stanje za pivo sa istim ID-em.
+                var prev = prevStates.FirstOrDefault(p => p.IdPiva == current.IdPiva);
+
+                float vagaStart;
+                float posStart;
+
+                if (prev != null)
+                {
+                    vagaStart = prev.Izmereno;
+                    posStart = prev.StanjeUProgramu;
+                }
+                else
+                {
+                    // ako nema prethodnog, start = end
+                    vagaStart = current.Izmereno;
+                    posStart = current.StanjeUProgramu;
+                }
+
+                float vagaEnd = current.Izmereno;
+                float posEnd = current.StanjeUProgramu;
+
+                var vagaPotrosnja = vagaStart - vagaEnd;
+                var posPotrosnja = posStart - posEnd;
+
+                items.Add(new BeerCalcResultDto
+                {
+                    IdPiva = current.IdPiva,
+
+                    VagaStart = vagaStart,
+                    VagaEnd = vagaEnd,
+                    VagaPotrosnja = vagaPotrosnja,
+
+                    PosStart = posStart,
+                    PosEnd = posEnd,
+                    PosPotrosnja = posPotrosnja,
+
+                    Odstupanje = vagaPotrosnja - posPotrosnja
+                });
+            }
+
+            //TAB2 TRAZIMO PROSUTO ZA TAJ DAN(nalog)
+
+            var report = await _context.DailyReports.AsNoTracking().FirstOrDefaultAsync(
+                r => r.IdNaloga == idNaloga);
+
+            var TotalProsuto = report?.TotalProsuto ?? 0;
+
+            
+
+            return new ProsutoResultDto
+            {
+                IdNaloga = idNaloga,
+                TotalProsuto = TotalProsuto,
+                Items = items
+            };
         }
 
     }

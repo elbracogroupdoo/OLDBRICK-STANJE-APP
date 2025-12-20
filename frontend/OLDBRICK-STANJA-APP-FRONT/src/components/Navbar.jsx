@@ -2,11 +2,6 @@ import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 
-const links = [
-  { to: "/", label: "Početna" },
-  { to: "/unesi", label: "Unesi stanje" },
-];
-
 function Navbar() {
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -56,31 +51,40 @@ function Navbar() {
 
         {/* Desktop links */}
         <div className="hidden items-center gap-2 md:flex">
-          {links.map((l) => (
-            <NavLink
-              key={l.to}
-              to={l.to}
-              className={({ isActive }) =>
-                [
-                  "rounded-lg px-3 py-2 text-sm transition",
-                  "hover:bg-white/10",
-                  isActive
-                    ? "bg-white/10 text-[#FACC15] font-medium"
-                    : "text-white/80",
-                ].join(" ")
-              }
-            >
-              {l.label}
-            </NavLink>
-          ))}
-          {/* AUTH (Desktop) */}
+          <NavLink
+            to="/"
+            className={({ isActive }) =>
+              [
+                "rounded-lg px-3 py-2 text-sm transition hover:bg-white/10",
+                isActive
+                  ? "bg-white/10 text-[#FACC15] font-medium"
+                  : "text-white/80",
+              ].join(" ")
+            }
+          >
+            Početna
+          </NavLink>
+
+          <NavLink
+            to="/unesi"
+            className={({ isActive }) =>
+              [
+                "rounded-lg px-3 py-2 text-sm transition hover:bg-white/10",
+                isActive
+                  ? "bg-white/10 text-[#FACC15] font-medium"
+                  : "text-white/80",
+              ].join(" ")
+            }
+          >
+            Unesi stanje
+          </NavLink>
+
+          {/* AUTH */}
           <button
             type="button"
             onClick={handleAuthClick}
             className={[
-              "rounded-lg px-3 py-2 text-sm transition",
-              "hover:bg-white/10",
-              "cursor-pointer",
+              "rounded-lg px-3 py-2 text-sm transition hover:bg-white/10 cursor-pointer",
               isAuthActive
                 ? "bg-white/10 text-[#FACC15] font-medium"
                 : "text-white/80",
@@ -140,25 +144,37 @@ function Navbar() {
 
           {/* Links */}
           <div className="flex flex-col p-4 gap-2">
-            {links.map((l) => (
-              <NavLink
-                key={l.to}
-                to={l.to}
-                onClick={() => setOpen(false)}
-                className={({ isActive }) =>
-                  [
-                    "rounded-xl px-4 py-4 text-base transition",
-                    "hover:bg-white/10",
-                    isActive
-                      ? "bg-white/10 text-[#FACC15] font-medium"
-                      : "text-white/80",
-                  ].join(" ")
-                }
-              >
-                {l.label}
-              </NavLink>
-            ))}
-            {/* AUTH (Mobile) */}
+            <NavLink
+              to="/"
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                [
+                  "rounded-xl px-4 py-4 text-base transition hover:bg-white/10",
+                  isActive
+                    ? "bg-white/10 text-[#FACC15] font-medium"
+                    : "text-white/80",
+                ].join(" ")
+              }
+            >
+              Početna
+            </NavLink>
+
+            <NavLink
+              to="/daily-reports"
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                [
+                  "rounded-xl px-4 py-4 text-base transition hover:bg-white/10",
+                  isActive
+                    ? "bg-white/10 text-[#FACC15] font-medium"
+                    : "text-white/80",
+                ].join(" ")
+              }
+            >
+              Unesi stanje
+            </NavLink>
+
+            {/* AUTH */}
             <button
               type="button"
               onClick={() => {
@@ -166,9 +182,7 @@ function Navbar() {
                 handleAuthClick();
               }}
               className={[
-                "rounded-xl px-4 py-4 text-base transition",
-                "hover:bg-white/10",
-                "cursor-pointer",
+                "rounded-xl px-4 py-4 text-base transition hover:bg-white/10 cursor-pointer",
                 isAuthActive
                   ? "bg-white/10 text-[#FACC15] font-medium"
                   : "text-white/80",

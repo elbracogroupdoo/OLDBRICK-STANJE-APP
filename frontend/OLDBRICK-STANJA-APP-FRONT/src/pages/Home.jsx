@@ -8,7 +8,7 @@ function Home() {
       <div className="w-full max-w-md space-y-3">
         <button
           type="button"
-          onClick={() => navigate("/unos")}
+          onClick={() => navigate("/daily-reports")}
           className="w-full rounded-xl px-4 py-3 text-sm font-medium bg-[#2A2F3A] text-white hover:bg-[#343B49] transition"
         >
           UNESI IZVEŠTAJ
@@ -16,7 +16,7 @@ function Home() {
 
         <button
           type="button"
-          onClick={() => navigate("/pregled/dan")}
+          onClick={() => navigate("/daybefore-report")}
           className="w-full rounded-xl px-4 py-3 text-sm font-medium bg-white text-[#2A2F3A] border border-black/10 hover:bg-black/5 transition"
         >
           POGLEDAJ PRETHODNI DAN
