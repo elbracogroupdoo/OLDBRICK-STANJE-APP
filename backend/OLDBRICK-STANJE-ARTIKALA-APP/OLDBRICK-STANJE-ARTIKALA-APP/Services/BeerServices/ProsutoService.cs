@@ -185,6 +185,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 r => r.IdNaloga == idNaloga);
 
             var TotalProsuto = report?.TotalProsuto ?? 0;
+            var ProsutoKanta = report?.IzmerenoProsuto ?? 0;
 
             
 
@@ -192,7 +193,8 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
             {
                 IdNaloga = idNaloga,
                 TotalProsuto = TotalProsuto,
-                Items = items
+                Items = items,
+                ProsutoKanta = ProsutoKanta
             };
         }
 
