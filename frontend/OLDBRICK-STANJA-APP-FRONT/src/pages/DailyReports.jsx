@@ -3,6 +3,7 @@ import DailyReportPreview from "../components/DailyReportPreview";
 import Calendar from "../components/Calendar";
 import ProsutoKantaForm from "../components/ProsutoKantaForm";
 import { createNalogByDate, getNalogByDate } from "../api/helpers";
+import SaveDailyReportStates from "../components/SaveDailyReportStates";
 
 function DailyReports() {
   const [datum, setDatum] = useState("");
@@ -69,6 +70,7 @@ function DailyReports() {
             </div>
           )}
         </div>
+        <SaveDailyReportStates idNaloga={idNaloga} />
         <ProsutoKantaForm idNaloga={idNaloga} />
 
         <p className="mt-3 text-center text-white/60 text-sm">

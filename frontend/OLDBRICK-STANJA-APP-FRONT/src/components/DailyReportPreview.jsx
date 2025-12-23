@@ -33,7 +33,7 @@ function DailyReportPreview({ datum, onidNalogaResolved }) {
   return (
     <div className="mt-6">
       <h3 className="text-center text-lg text-gray-300 mb-3">
-        Total prosuto:{" "}
+        Prosuto po aplikaciji:{" "}
         <span
           className={`font-semibold ${
             data.totalProsuto < 0 ? "text-green-400" : "text-red-400"
@@ -45,7 +45,7 @@ function DailyReportPreview({ datum, onidNalogaResolved }) {
         </span>
       </h3>
       <h3 className="text-center text-lg text-gray-300 mb-3">
-        Izmereno prosuto:{" "}
+        Prosuto na vagi:{" "}
         <span
           className={`font-semibold ${
             data.prosutoKanta < 0 ? "text-green-400" : "text-red-400"

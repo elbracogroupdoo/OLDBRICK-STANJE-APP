@@ -23,6 +23,11 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
             if(!reportExists)
                 throw new ArgumentException("Dnevni nalog ne postoji.");
 
+            var beerIds = items.Select(x => x.BeerId).Distinct().ToList();
+
+            var beers = await _context.Beers.Where(b => beerIds.Contains(b.Id))
+                .ToDictionaryAsync(b => b.Id, b => b.NazivPiva);
+
             var result = new List<DailyBeerState>();
 
             foreach( var dto in items)
@@ -30,7 +35,9 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 if (dto.BeerId <= 0) throw new ArgumentException("BeerId nije validan.");
                 if (dto.Izmereno < 0) throw new ArgumentException("Izmereno ne može biti negativno.");
                 if (dto.StanjeUProgramu < 0) throw new ArgumentException("Stanje u programu ne može biti negativno.");
-                
+                if (!beers.TryGetValue(dto.BeerId, out var beerName))
+                    throw new ArgumentException($"Pivo sa ID {dto.BeerId} ne postoji.");
+
 
                 var existing = await _context.DailyBeerStates
                     .FirstOrDefaultAsync(x => x.IdNaloga == idNaloga && x.IdPiva == dto.BeerId);
@@ -41,6 +48,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                     {
                         IdNaloga = idNaloga,
                         IdPiva = dto.BeerId,
+                        NazivPiva = beerName,
                         Izmereno = dto.Izmereno,
                         StanjeUProgramu = dto.StanjeUProgramu
                     };
@@ -50,6 +58,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 }
                 else
                 {
+                    existing.NazivPiva = beerName;
                     existing.Izmereno = dto.Izmereno;
                     existing.StanjeUProgramu = dto.StanjeUProgramu;
                     result.Add(existing);

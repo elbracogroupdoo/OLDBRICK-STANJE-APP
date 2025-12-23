@@ -45,7 +45,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
             return Ok(beer);
         }
 
-        [HttpGet("allArticals")]
+        [HttpGet("allArticles")]
         public async Task<IActionResult> GetAll()
         {
             var allBeers = await _beerService.GetAllBeersAsync();

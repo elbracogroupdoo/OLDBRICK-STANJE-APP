@@ -3,6 +3,7 @@
     public class BeerCalcResultDto
     {
         public int IdPiva { get; set; }
+        public string NazivPiva { get; set; }
 
         public float VagaStart { get; set; }
         public float VagaEnd { get; set; }

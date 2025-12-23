@@ -32,11 +32,29 @@ async function getNalogByDate(datum) {
   }
 }
 
+async function postDailyReportStates(idNaloga, states){
+    const {data} = await httpClient.post(`api/dailyreports/${idNaloga}/states`, states);
+    return data;
+}
+
+async function getAllArticles(){
+    const {data} = await httpClient.get("api/Beers/allArticles")
+    return data;
+}
+
+async function calculateProsutoOnly(idNaloga){
+    const {data} = await httpClient.post(`api/dailyreports/${idNaloga}/calculate-prosuto`);
+    return data;
+}
+
 
 export {
     getReportStatesById,
     createNalogByDate,
     putMeasuredProsuto,
     calculateProsutoRazlika,
-    getNalogByDate
+    getNalogByDate,
+    postDailyReportStates,
+    getAllArticles,
+    calculateProsutoOnly
 };

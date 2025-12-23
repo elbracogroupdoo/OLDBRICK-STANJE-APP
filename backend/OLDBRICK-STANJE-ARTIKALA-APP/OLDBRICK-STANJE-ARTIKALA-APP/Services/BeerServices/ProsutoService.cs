@@ -166,6 +166,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 items.Add(new BeerCalcResultDto
                 {
                     IdPiva = current.IdPiva,
+                    NazivPiva = current.NazivPiva,
 
                     VagaStart = vagaStart,
                     VagaEnd = vagaEnd,
