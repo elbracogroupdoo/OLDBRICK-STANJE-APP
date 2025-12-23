@@ -14,7 +14,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
             _context = context;
         }
 
-        public async Task<DailyReportResponseDto> GetorCreateByDateAsync(DateOnly datum)
+        public async Task<DailyReportResponseDto> CreateByDateAsync(DateOnly datum)
         {
             var existing = await _context.DailyReports
                 .AsNoTracking()
@@ -49,6 +49,25 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 Datum = dailyReport.Datum,
                 TotalProsuto = dailyReport.TotalProsuto,
                 IzracunataRazlikaProsutog = dailyReport.ProsutoRazlika,
+                IzmerenoProsutoVaga = dailyReport.IzmerenoProsuto
+            };
+        }
+        public async Task<DailyReportResponseDto> GetByDateAsync(DateOnly datum)
+        {
+            var report = await _context.DailyReports.AsNoTracking()
+                .FirstOrDefaultAsync(x => x.Datum == datum);
+
+            if(report == null)
+            {
+                throw new KeyNotFoundException($"Daily report for date {datum} not found.");
+            }
+            return new DailyReportResponseDto
+            {
+                IdNaloga = report.IdNaloga,
+                Datum = report.Datum,
+                TotalProsuto = report.TotalProsuto,
+                IzracunataRazlikaProsutog = report.ProsutoRazlika,
+                IzmerenoProsutoVaga = report.IzmerenoProsuto
             };
         }
     }

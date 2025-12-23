@@ -25,11 +25,26 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
         }
 
         [HttpPost("for-date")]
-        public async Task<IActionResult> GetorCreateForDate([FromBody] GetOrCreateDailyReportDto dto)
+        public async Task<IActionResult> CreateForDate([FromBody] GetOrCreateDailyReportDto dto)
         {
-            var result = await _dailyReport.GetorCreateByDateAsync(dto.Datum);
+            var result = await _dailyReport.CreateByDateAsync(dto.Datum);
             return Ok(result);
         }
+        [HttpGet("use-date")]
+        public async Task<ActionResult<DailyReportResponseDto>> GetByDate(
+    [FromQuery] DateOnly datum)
+        {
+            try
+            {
+                var result = await _dailyReport.GetByDateAsync(datum);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+
 
         [HttpPost("{idNaloga:int}/states")]
         public async Task<IActionResult> UpsertStates(int idNaloga, [FromBody] List<UpsertDailyBeerStateDto> items)

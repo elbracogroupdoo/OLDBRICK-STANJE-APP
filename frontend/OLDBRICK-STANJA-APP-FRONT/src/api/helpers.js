@@ -5,7 +5,7 @@ async function getReportStatesById(idNaloga){
     return data;
 }
 
-async function getOrCreateReportByDate(datum){
+async function createNalogByDate(datum){
     const {data} = await httpClient.post("api/dailyreports/for-date", {datum});
     return data;
 }
@@ -20,10 +20,23 @@ async function calculateProsutoRazlika(idNaloga){
     return data;
 }
 
+async function getNalogByDate(datum) {
+  try{
+    const { data } = await httpClient.get("/api/dailyreports/use-date", {
+    params: { datum },
+  });
+  return data;
+  }catch(error){
+    if(error?.response?.status === 404) return null;
+    throw error;
+  }
+}
+
 
 export {
     getReportStatesById,
-    getOrCreateReportByDate,
+    createNalogByDate,
     putMeasuredProsuto,
-    calculateProsutoRazlika
+    calculateProsutoRazlika,
+    getNalogByDate
 };

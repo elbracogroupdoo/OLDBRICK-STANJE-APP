@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
-import { getReportStatesById, getOrCreateReportByDate } from "../api/helpers";
+import { getReportStatesById, getNalogByDate } from "../api/helpers";
+import ReportDetails from "./ReportDetails";
 
 function DailyReportPreview({ datum, onidNalogaResolved }) {
   const [data, setData] = useState(null);
   const [idNaloga, setIdNaloga] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
 
   useEffect(() => {
     if (!datum) return;
-    getOrCreateReportByDate(datum)
+    getNalogByDate(datum)
       .then((res) => {
         setIdNaloga(res.idNaloga);
         onidNalogaResolved?.(res.idNaloga);
@@ -30,7 +32,7 @@ function DailyReportPreview({ datum, onidNalogaResolved }) {
 
   return (
     <div className="mt-6">
-      <h3 className="text-center text-sm text-gray-300 mb-3">
+      <h3 className="text-center text-lg text-gray-300 mb-3">
         Total prosuto:{" "}
         <span
           className={`font-semibold ${
@@ -42,7 +44,7 @@ function DailyReportPreview({ datum, onidNalogaResolved }) {
             : `-${data.totalProsuto}`}
         </span>
       </h3>
-      <h3 className="text-center text-sm text-gray-300 mb-3">
+      <h3 className="text-center text-lg text-gray-300 mb-3">
         Izmereno prosuto:{" "}
         <span
           className={`font-semibold ${
@@ -54,101 +56,47 @@ function DailyReportPreview({ datum, onidNalogaResolved }) {
             : `-${data.prosutoKanta}`}
         </span>
       </h3>
-
-      {/* ===== MOBILE (kartice) ===== */}
-      <div className="md:hidden space-y-3">
-        {data.items.map((x) => (
+      <button
+        type="button"
+        onClick={() => setShowDetails(true)}
+        className="rounded-lg px-4 py-2 text-sm font-medium
+             bg-yellow-400 text-black transition"
+      >
+        Detaljno dnevno stanje artikala
+      </button>
+      {showDetails && data && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* BACKDROP */}
           <div
-            key={x.idPiva}
-            className="rounded-lg border border-white/10 bg-white/5 p-3"
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setShowDetails(false)}
+          />
+
+          {/* MODAL WINDOW */}
+          <div
+            className="relative z-10 w-full max-w-5xl max-h-[85vh]
+                    overflow-y-auto rounded-xl
+                    bg-[#1f2937] p-6 shadow-2xl"
           >
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-sm font-semibold">Pivo {x.idPiva}</div>
-              <div
-                className={`text-sm font-semibold ${
-                  x.odstupanje === 0
-                    ? "text-green-400"
-                    : x.odstupanje < 0
-                    ? "text-orange-400"
-                    : "text-red-400"
-                }`}
+            {/* HEADER */}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-white">
+                Detaljno dnevno stanje
+              </h2>
+
+              <button
+                onClick={() => setShowDetails(false)}
+                className="text-gray-400 hover:text-white text-xl"
               >
-                Odst: {x.odstupanje === 0 ? x.odstupanje : `-${x.odstupanje}`}
-              </div>
+                ✕
+              </button>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="rounded-md bg-black/20 p-2">
-                <div className="text-xs text-gray-400">Vaga start</div>
-                <div className="font-medium">{x.vagaStart}</div>
-              </div>
-
-              <div className="rounded-md bg-black/20 p-2">
-                <div className="text-xs text-gray-400">Vaga end</div>
-                <div className="font-medium">{x.vagaEnd}</div>
-              </div>
-
-              <div className="rounded-md bg-black/20 p-2">
-                <div className="text-xs text-gray-400">Vaga potrošnja</div>
-                <div className="font-semibold">{x.vagaPotrosnja}</div>
-              </div>
-
-              <div className="rounded-md bg-black/20 p-2">
-                <div className="text-xs text-gray-400">POS potrošnja</div>
-                <div className="font-semibold">{x.posPotrosnja}</div>
-              </div>
-
-              <div className="rounded-md bg-black/20 p-2">
-                <div className="text-xs text-gray-400">POS start</div>
-                <div className="font-medium">{x.posStart}</div>
-              </div>
-
-              <div className="rounded-md bg-black/20 p-2">
-                <div className="text-xs text-gray-400">POS end</div>
-                <div className="font-medium">{x.posEnd}</div>
-              </div>
-            </div>
+            {/* CONTENT */}
+            <ReportDetails items={data.items} />
           </div>
-        ))}
-      </div>
-
-      {/* ===== DESKTOP / TABLET (tabela) ===== */}
-      <div className="hidden md:block mt-4 rounded-lg border border-white/10">
-        <table className="w-full border-collapse text-sm text-gray-200">
-          <thead className="bg-white/5">
-            <tr>
-              <th className="px-3 py-2 text-left">Pivo</th>
-              <th className="px-3 py-2 text-right">Vaga start</th>
-              <th className="px-3 py-2 text-right">Vaga end</th>
-              <th className="px-3 py-2 text-right">Vaga pot.</th>
-              <th className="px-3 py-2 text-right">POS start</th>
-              <th className="px-3 py-2 text-right">POS end</th>
-              <th className="px-3 py-2 text-right">POS pot.</th>
-              <th className="px-3 py-2 text-right">Odst.</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {data.items.map((x) => (
-              <tr
-                key={x.idPiva}
-                className="border-t border-white/10 hover:bg-white/5 transition"
-              >
-                <td className="px-3 py-2 font-medium">{x.idPiva}</td>
-                <td className="px-3 py-2 text-right">{x.vagaStart}</td>
-                <td className="px-3 py-2 text-right">{x.vagaEnd}</td>
-                <td className="px-3 py-2 text-right">{x.vagaPotrosnja}</td>
-                <td className="px-3 py-2 text-right">{x.posStart}</td>
-                <td className="px-3 py-2 text-right">{x.posEnd}</td>
-                <td className="px-3 py-2 text-right">{x.posPotrosnja}</td>
-                <td className="px-3 py-2 text-right font-semibold">
-                  {x.odstupanje}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+        </div>
+      )}
     </div>
   );
 }
