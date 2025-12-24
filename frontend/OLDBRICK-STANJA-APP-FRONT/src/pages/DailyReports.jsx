@@ -97,7 +97,7 @@ function DailyReports() {
             </div>
           )}
         </div>
-        <ProsutoKantaForm idNaloga={idNaloga} />
+        {/* <ProsutoKantaForm idNaloga={idNaloga} /> */}
         <SaveDailyReportStates idNaloga={idNaloga} />
 
         {/* <p className="mt-3 text-center text-white/60 text-sm">

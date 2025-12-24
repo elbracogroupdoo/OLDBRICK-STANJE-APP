@@ -5,7 +5,9 @@ import {
   getAllArticles,
   calculateProsutoRazlika,
   calculateProsutoOnly,
+  putMeasuredProsuto,
 } from "../api/helpers";
+import ProsutoKantaForm from "./ProsutoKantaForm";
 
 function SaveDailyReportStates({ idNaloga }) {
   const [items, setItems] = useState([]);
@@ -13,6 +15,9 @@ function SaveDailyReportStates({ idNaloga }) {
   const [values, setValues] = useState({});
   const [articles, setArticles] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [statusType, setStatusType] = useState("SUCCESS");
+  const [prosutoKanta, setProsutoKanta] = useState("");
 
   function handleChange(idPiva, field, value) {
     setValues((prev) => ({
@@ -26,6 +31,9 @@ function SaveDailyReportStates({ idNaloga }) {
 
   async function handleSave() {
     try {
+      setLoading(true);
+      setStatusMessage("");
+
       const dataToSend = Object.entries(values).map(([idPiva, v]) => ({
         beerId: Number(idPiva),
         izmereno: Number(v.izmereno),
@@ -33,10 +41,26 @@ function SaveDailyReportStates({ idNaloga }) {
       }));
 
       await postDailyReportStates(idNaloga, dataToSend);
+
+      const proKanta = Number(prosutoKanta);
+
+      if (!Number.isNaN(proKanta)) {
+        await putMeasuredProsuto(idNaloga, proKanta);
+      }
+
       await calculateProsutoOnly(idNaloga);
       await calculateProsutoRazlika(idNaloga);
+
+      setStatusType("SUCCESS");
+      setStatusMessage("SAČUVANO USPEŠNO");
+      setTimeout(() => setStatusMessage(""), 3000);
     } catch (err) {
       console.error(err);
+      setStatusType("error");
+      setStatusMessage("Greška pri čuvanju. Pokušaj ponovo.");
+      setTimeout(() => setStatusMessage(""), 3000);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -140,6 +164,23 @@ function SaveDailyReportStates({ idNaloga }) {
                   </div>
                 </div>
               ))}
+              <ProsutoKantaForm
+                idNaloga={idNaloga}
+                onChange={setProsutoKanta}
+                value={prosutoKanta}
+              />
+              {statusMessage && (
+                <div
+                  className={[
+                    "rounded-lg px-3 py-2 text-sm border",
+                    statusType === "success"
+                      ? "bg-green-500/10 text-green-300 border-green-500/20"
+                      : "bg-red-500/10 text-red-300 border-red-500/20",
+                  ].join(" ")}
+                >
+                  {statusMessage}
+                </div>
+              )}
 
               <button
                 type="button"
