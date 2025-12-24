@@ -1,3 +1,4 @@
+import { getAllReportDates } from "../api/helpers";
 import { useMemo, useState, useEffect } from "react";
 
 function pad2(n) {
@@ -33,6 +34,30 @@ function Calendar({ value, onChange, label = "Datum" }) {
   const selected = useMemo(() => parseISO(value), [value]);
 
   const [viewDate, setViewDate] = useState(() => selected ?? new Date());
+  const [markedMap, setMarkedMap] = useState(new Map());
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const dates = await getAllReportDates();
+
+        const map = new Map();
+        for (const d of dates) {
+          map.set(d.datum, d.idNaloga);
+        }
+
+        if (!cancelled) setMarkedMap(map);
+      } catch (e) {
+        console.error("Failed to load report dates:", e);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     if (selected) setViewDate(selected);
@@ -133,8 +158,8 @@ function Calendar({ value, onChange, label = "Datum" }) {
             const isEmpty = !d;
             const iso = d ? toISODate(d) : null;
             const isSelected = iso && selectedISO === iso;
-
             const isToday = d && toISODate(d) === toISODate(new Date());
+            const isMarked = iso && markedMap.has(iso);
 
             return (
               <button
@@ -143,7 +168,7 @@ function Calendar({ value, onChange, label = "Datum" }) {
                 disabled={isEmpty}
                 onClick={() => iso && onChange(iso)}
                 className={[
-                  "aspect-square rounded-lg text-sm sm:text-base transition",
+                  "relative aspect-square rounded-lg text-sm sm:text-base transition",
                   isEmpty
                     ? "opacity-0 cursor-default"
                     : "hover:bg-white/10 text-white/90",
@@ -151,9 +176,20 @@ function Calendar({ value, onChange, label = "Datum" }) {
                     ? "bg-[#FACC15] text-black font-semibold hover:bg-[#FACC15]"
                     : "",
                   !isSelected && isToday ? "ring-1 ring-[#FACC15]/50" : "",
+                  isMarked && !isSelected
+                    ? "bg-green-500/70 ring-1 ring-emerald-400/40"
+                    : "",
                 ].join(" ")}
               >
-                {d ? d.getDate() : ""}
+                <span className="inline-flex items-center justify-center w-full h-full">
+                  {d ? d.getDate() : ""}
+                </span>
+
+                {isMarked && !isSelected && (
+                  <span className="absolute bottom-1 right-1 text-[10px] leading-none text-emerald-300">
+                    ✔
+                  </span>
+                )}
               </button>
             );
           })}

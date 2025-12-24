@@ -47,6 +47,11 @@ async function calculateProsutoOnly(idNaloga){
     return data;
 }
 
+async function getAllReportDates(){
+    const {data} = await httpClient.get("api/dailyreports/dates");
+    return data;
+}
+
 
 export {
     getReportStatesById,
@@ -56,5 +61,6 @@ export {
     getNalogByDate,
     postDailyReportStates,
     getAllArticles,
-    calculateProsutoOnly
+    calculateProsutoOnly,
+    getAllReportDates
 };
