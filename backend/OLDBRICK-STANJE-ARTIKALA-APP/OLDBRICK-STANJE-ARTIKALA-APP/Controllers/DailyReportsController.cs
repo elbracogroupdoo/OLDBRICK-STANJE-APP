@@ -136,7 +136,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
                 to,
                 totalMEasuredProsuto = measured,
                 totalAppProsuto = app,
-                totalDifference = measured - app
+                totalDifference = app - measured
             });
 
         }

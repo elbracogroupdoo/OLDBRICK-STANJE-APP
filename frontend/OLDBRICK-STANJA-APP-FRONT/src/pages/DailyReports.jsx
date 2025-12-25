@@ -15,20 +15,22 @@ function DailyReports() {
       const existing = await getNalogByDate(datum);
 
       if (existing) {
-        setStatusMessageForNalog("Nalog za izabrani datum već postoji.");
-        setTimeout(() => setStatusMessageForNalog(""), 1000);
+        // setStatusMessageForNalog("Nalog za izabrani datum već postoji.");
+        // setTimeout(() => setStatusMessageForNalog(""), 1000);
         return;
       }
 
       const res = await createNalogByDate(datum);
       setIdNaloga(res.idNaloga);
 
-      setStatusMessageForNalog(`Nalog za datum ${datum} je uspešno kreiran.`);
-      setTimeout(() => setStatusMessageForNalog(""), 1000);
+      // setStatusMessageForNalog(`Nalog za datum ${datum} je uspešno kreiran.`);
+      // setTimeout(() => setStatusMessageForNalog(""), 1000);
     } catch (err) {
       console.error(err);
-      setStatusMessageForNalog("Došlo je do greške prilikom kreiranja naloga.");
-      setTimeout(() => setStatusMessageForNalog(""), 1000);
+      // setStatusMessageForNalog("Došlo je do greške prilikom kreiranja naloga.");
+      // setTimeout(() => setStatusMessageForNalog(""), 1000);
+
+      // for now this state can be in comment, I will see will I remove it..
     }
   }
   async function handleCalendarChange(datum) {
@@ -42,43 +44,7 @@ function DailyReports() {
       <div className="pt-20 px-4">
         <div className="mt-4">
           <Calendar value={datum} onChange={handleCalendarChange} />
-          {/* <button
-            type="button"
-            disabled={!datum}
-            onClick={async () => {
-              try {
-                const existing = await getNalogByDate(datum);
-                if (existing) {
-                  setStatusMessageForNalog(
-                    "Nalog za izabrani datum već postoji."
-                  );
-                  setTimeout(() => setStatusMessageForNalog(""), 3000);
-                  return;
-                }
-                const res = await createNalogByDate(datum);
-                setIdNaloga(res.idNaloga);
-                setStatusMessageForNalog(
-                  `Nalog za datum ${datum} je uspešno kreiran.`
-                );
-                setTimeout(() => setStatusMessageForNalog(""), 3000);
-              } catch (err) {
-                console.error(err);
-                setStatusMessageForNalog(
-                  "Došlo je do greške prilikom kreiranja naloga."
-                );
-                setTimeout(() => setStatusMessageForNalog(""), 3000);
-              }
-            }}
-            className={[
-              "mt-4 w-full rounded-lg px-4 py-2 text-sm font-medium transition",
-              !datum
-                ? "bg-white/10 text-white/40 cursor-not-allowed"
-                : "bg-[#FACC15] text-black hover:brightness-110",
-            ].join(" ")}
-          >
-            Kreiraj nalog za izabrani datum
-          </button> */}{" "}
-          {/*We don't need button anymore, but for future it can stay in comment xD  */}
+
           {statusMessageForNalog && (
             <div className="fixed inset-0 z-50 flex items-center justify-center">
               {/* BACKDROP */}

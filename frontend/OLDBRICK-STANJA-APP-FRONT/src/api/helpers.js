@@ -55,6 +55,28 @@ async function getDailyReportJustByDate(date){
     const {data} = await httpClient.get(`/api/dailyreports/by-date?date=${date}`);
     return data; // data is just idNaloga & datum! 
 }
+// [HttpPost("{idNaloga}/calculate-prosuto-for-each-beer")]
+
+async function postCalculatedProsutoForEachBeer(idNaloga){
+    const {data} = await httpClient.post(`/api/dailyreports/${idNaloga}/calculate-prosuto-for-each-beer`);
+    return data;
+}
+//[HttpGet("total-by-range")]
+
+async function getByRangeTotalProsuto(from, to) {
+  const { data } = await httpClient.get("/api/dailyreports/total-by-range", {
+    params: { from, to }, 
+  });
+  return data;
+}
+//[HttpGet("range-report-for-oneBeer")]
+
+async function getProsutoByRangeForEachBeer(from, to){
+    const {data} = await httpClient.get("/api/dailyreports/range-report-for-oneBeer", {
+        params: {from, to},
+    });
+    return data;
+}
 
 
 export {
@@ -67,5 +89,8 @@ export {
     getAllArticles,
     calculateProsutoOnly,
     getAllReportDates,
-    getDailyReportJustByDate
+    getDailyReportJustByDate,
+    postCalculatedProsutoForEachBeer,
+    getByRangeTotalProsuto,
+    getProsutoByRangeForEachBeer
 };

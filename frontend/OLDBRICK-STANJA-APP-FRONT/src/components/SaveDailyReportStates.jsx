@@ -6,6 +6,7 @@ import {
   calculateProsutoRazlika,
   calculateProsutoOnly,
   putMeasuredProsuto,
+  postCalculatedProsutoForEachBeer,
 } from "../api/helpers";
 import ProsutoKantaForm from "./ProsutoKantaForm";
 
@@ -50,6 +51,7 @@ function SaveDailyReportStates({ idNaloga }) {
 
       await calculateProsutoOnly(idNaloga);
       await calculateProsutoRazlika(idNaloga);
+      await postCalculatedProsutoForEachBeer(idNaloga);
 
       setStatusType("SUCCESS");
       setStatusMessage("SAČUVANO USPEŠNO");
