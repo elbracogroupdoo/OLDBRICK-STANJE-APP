@@ -8,5 +8,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
         Task<DailyReportResponseDto> GetByDateAsync(DateOnly datum);
         Task<List<DailyReportDateDto>> GetAllDatesNalogaAsync();
         Task<DailyReportDateDto> GetTodayAsync(DateOnly date);
+        Task<List<int>> GetReportIdsForRangeAsync(DateOnly from, DateOnly to);
+        Task<(float totalMeasured, float totalApp)> GetTotalsForRangeAsync(List<int> reportIds);
     }
 }

@@ -113,6 +113,32 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
 
             return Ok(result);
         }
+
+        [HttpGet("ids-by-range")]
+        public async Task<IActionResult> GetIdsByRange([FromQuery] DateOnly from,  [FromQuery] DateOnly to)
+        {
+            var ids = await _dailyReport.GetReportIdsForRangeAsync(from, to);
+            
+            return Ok(ids);
+        }
+
+        [HttpGet("total-by-range")]
+        public async Task<IActionResult> GetTotalsByRange([FromQuery] DateOnly from, [FromQuery] DateOnly to)
+        {
+            var ids = await _dailyReport.GetReportIdsForRangeAsync(from, to);
+
+            var (measured, app) = await _dailyReport.GetTotalsForRangeAsync(ids);
+
+            return Ok(new
+            {
+                from,
+                to,
+                totalMEasuredProsuto = measured,
+                totalAppProsuto = app,
+                totalDifference = measured - app
+            });
+
+        } 
     }
 
 }

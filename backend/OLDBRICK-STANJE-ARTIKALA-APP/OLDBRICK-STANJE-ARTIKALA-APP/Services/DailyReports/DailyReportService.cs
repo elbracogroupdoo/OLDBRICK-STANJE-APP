@@ -92,5 +92,32 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 })
                 .FirstOrDefaultAsync();
         }
+
+        public async Task<List<int>> GetReportIdsForRangeAsync(DateOnly from, DateOnly to)
+        {
+            if (from > to) throw new ArgumentException("From date must be before to date");
+
+            var ids = await _context.DailyReports.Where(r => r.Datum >= from && r.Datum <= to)
+                .Select(r => r.IdNaloga)
+                .ToListAsync();
+
+            return ids;
+        }
+
+        public async Task<(float totalMeasured, float totalApp)> GetTotalsForRangeAsync(List<int> reportIds)
+        {
+            if (reportIds == null || reportIds.Count == 0)
+                return (0f, 0f);
+
+            var totalMeasured = await _context.DailyReports
+                .Where(r => reportIds.Contains(r.IdNaloga))
+                .SumAsync(s => (float?)s.IzmerenoProsuto) ?? 0f;
+
+            var totalApp = await _context.DailyReports
+                .Where(s => reportIds.Contains(s.IdNaloga))
+                .SumAsync(s => (float?)(s.TotalProsuto)) ?? 0f;
+
+            return (totalMeasured, totalApp);
+        }
     }
 }
