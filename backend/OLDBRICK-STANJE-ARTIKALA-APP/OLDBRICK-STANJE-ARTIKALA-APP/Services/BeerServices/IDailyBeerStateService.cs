@@ -6,5 +6,6 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
     public interface IDailyBeerStateService
     {
         Task<List<DailyBeerState>> UpsertForReportAsync(int idNaloga, List<UpsertDailyBeerStateDto> items);
+        Task<DailyBeerState?> AddQuantityAsync(int idNaloga, int idPiva, float kolicina);
     }
 }

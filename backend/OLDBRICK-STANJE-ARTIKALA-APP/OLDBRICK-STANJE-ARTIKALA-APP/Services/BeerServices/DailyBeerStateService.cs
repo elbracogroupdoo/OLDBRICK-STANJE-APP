@@ -69,5 +69,25 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
             await _context.SaveChangesAsync();
             return result;
         }
+
+        public async Task<DailyBeerState?> AddQuantityAsync(int idNaloga, int idPiva, float kolicina)
+        {
+            if(idNaloga <= 0) throw new ArgumentException("IdNaloga nije validan.");
+            if (idPiva <= 0) throw new ArgumentException("IdPiva nije validan.");
+            if (kolicina <= 0) throw new ArgumentException("Kolicina mora biti veca od 0.");
+
+            var state = await _context.DailyBeerStates
+                .FirstOrDefaultAsync(x => x.IdNaloga == idNaloga && x.IdPiva == idPiva);
+
+            if (state == null) return null;
+
+            state.Izmereno += kolicina;
+            state.StanjeUProgramu += kolicina;
+
+            await _context.SaveChangesAsync();
+            return state;
+        }
+
+
     }
 }

@@ -5,6 +5,7 @@ using OLDBRICK_STANJE_ARTIKALA_APP.DTOs.DailyReports;
 using OLDBRICK_STANJE_ARTIKALA_APP.DTOs.RangeReports;
 using OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices;
 using OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
 {
@@ -160,6 +161,19 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
         {
             var updated = await _prosutoService.CalculateAndUpdateProsutoForReportAsync(idNaloga);
             return Ok(updated);
+        }
+
+        [HttpPatch("{idNaloga}/states/{idPiva}/add")]
+        public async Task<IActionResult> AddBeerQuantity(int idNaloga, int idPiva, [FromBody] AddBeerQuantityDto dto)
+        {
+            var updatedBeer = await _stateService.AddQuantityAsync(idNaloga, idPiva, dto.Kolicina);
+
+
+            if (updatedBeer == null)
+            {
+                return NotFound($"Ne postoji stanje za IdNaloga={idNaloga} i IdPiva={idPiva}.");
+            }
+            return Ok(updatedBeer);
         }
     }
 
