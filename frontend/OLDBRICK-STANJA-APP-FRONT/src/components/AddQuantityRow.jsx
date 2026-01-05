@@ -1,12 +1,19 @@
 import { useState } from "react";
-import { addBeerQuantity } from "../api/helpers";
+import { addBeerQuantity, addMoreBeerQuantity } from "../api/helpers";
 
-function AddQuantitySingle({ idNaloga, articles = [], onUpdated }) {
+function AddQuantityRow({ idNaloga, articles = [], onUpdated }) {
   const [selectedBeerId, setSelectedBeerId] = useState("");
   const [kolicina, setKolicina] = useState("");
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
   const idNalogaDayBefore = idNaloga - 1;
+  const [items, setItems] = useState(
+    articles.map((article) => ({
+      idPiva: article.idPiva,
+      kolicina: 0,
+      selected: true,
+    }))
+  );
 
   async function handleAdd() {
     try {
@@ -97,4 +104,4 @@ function AddQuantitySingle({ idNaloga, articles = [], onUpdated }) {
   );
 }
 
-export default AddQuantitySingle;
+export default AddQuantityRow;

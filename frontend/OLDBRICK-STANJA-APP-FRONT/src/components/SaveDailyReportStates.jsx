@@ -11,6 +11,7 @@ import {
 } from "../api/helpers";
 import ProsutoKantaForm from "./ProsutoKantaForm";
 import AddQuantityRow from "./AddQuantityRow";
+import AddQuantityBatch from "./AddQuantityBatch";
 
 function SaveDailyReportStates({ idNaloga }) {
   const [items, setItems] = useState([]);
@@ -140,8 +141,11 @@ function SaveDailyReportStates({ idNaloga }) {
                   />
 
                   {/* modal box */}
-                  <div className="relative z-10  rounded-xl bg-white p-6 shadow-xl">
+                  {/* <div className="relative z-10  rounded-xl bg-white p-6 shadow-xl">
                     <AddQuantityRow idNaloga={idNaloga} articles={articles} />
+                  </div> */}
+                  <div className="relative z-10  rounded-xl bg-black p-6 shadow-xl ">
+                    <AddQuantityBatch idNaloga={idNaloga} articles={articles} />
                   </div>
                 </div>
               )}

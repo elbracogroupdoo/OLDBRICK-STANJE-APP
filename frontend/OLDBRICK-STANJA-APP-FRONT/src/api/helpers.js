@@ -87,6 +87,10 @@ async function addBeerQuantity(idNaloga, idPiva, kolicina){
     return data;
 }
 
+async function addMoreBeerQuantity(idNaloga, items){
+    const {data} = await httpClient.patch(`/api/dailyreports/${idNaloga}/states/add-batch`, items);
+}
+
 
 export {
     getReportStatesById,
@@ -102,5 +106,6 @@ export {
     postCalculatedProsutoForEachBeer,
     getByRangeTotalProsuto,
     getProsutoByRangeForEachBeer,
-    addBeerQuantity
+    addBeerQuantity,
+    addMoreBeerQuantity
 };
