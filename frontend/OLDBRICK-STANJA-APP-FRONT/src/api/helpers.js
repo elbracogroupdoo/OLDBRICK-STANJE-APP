@@ -91,6 +91,12 @@ async function addMoreBeerQuantity(idNaloga, items){
     const {data} = await httpClient.patch(`/api/dailyreports/${idNaloga}/states/add-batch`, items);
 }
 
+async function deleteDailyReport(idNaloga){
+    if(!idNaloga) throw new error("Ovaj nalog ne postoji");
+
+    await httpClient.delete(`/api/dailyreports/${idNaloga}`)
+}
+
 
 export {
     getReportStatesById,
@@ -107,5 +113,6 @@ export {
     getByRangeTotalProsuto,
     getProsutoByRangeForEachBeer,
     addBeerQuantity,
-    addMoreBeerQuantity
+    addMoreBeerQuantity,
+    deleteDailyReport
 };

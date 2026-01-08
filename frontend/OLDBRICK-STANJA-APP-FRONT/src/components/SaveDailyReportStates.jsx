@@ -8,6 +8,7 @@ import {
   putMeasuredProsuto,
   postCalculatedProsutoForEachBeer,
   addBeerQuantity,
+  deleteDailyReport,
 } from "../api/helpers";
 import ProsutoKantaForm from "./ProsutoKantaForm";
 import AddQuantityRow from "./AddQuantityRow";
@@ -23,6 +24,7 @@ function SaveDailyReportStates({ idNaloga }) {
   const [statusType, setStatusType] = useState("SUCCESS");
   const [prosutoKanta, setProsutoKanta] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [msg, setMsg] = useState("");
 
   function handleChange(idPiva, field, value) {
     setValues((prev) => ({
@@ -70,6 +72,21 @@ function SaveDailyReportStates({ idNaloga }) {
     }
   }
 
+  async function handleDelete() {
+    const ok = window.confirm(
+      "Da li ste sigurni da želite da obrišete ovaj nalog?"
+    );
+
+    if (!ok) return;
+
+    try {
+      await deleteDailyReport(idNaloga);
+      setMsg("Nalog je obrisan uspešno!");
+    } catch (error) {
+      setMsg("Greška pri brisanju naloga", error);
+    }
+  }
+
   useEffect(() => {
     getAllArticles().then(setArticles).catch(console.error);
   }, []);
@@ -99,14 +116,23 @@ function SaveDailyReportStates({ idNaloga }) {
   return (
     <div className="mt-4">
       {/* Trigger button */}
-      <button
-        type="button"
-        onClick={() => setShowModal(true)}
-        disabled={!idNaloga}
-        className="rounded-lg px-4 py-2 text-sm font-medium bg-yellow-400 text-black transition disabled:opacity-50"
-      >
-        Unesi dnevno stanje
-      </button>
+      <div className="flex flex-col gap-3">
+        <button
+          type="button"
+          onClick={() => setShowModal(true)}
+          disabled={!idNaloga}
+          className="rounded-lg px-4 py-2 text-sm font-medium bg-yellow-400 text-black transition disabled:opacity-50"
+        >
+          Unesi dnevno stanje
+        </button>
+
+        <button
+          onClick={handleDelete}
+          className="rounded-lg px-4 py-2 text-sm font-medium bg-red-500 text-white transition hover:bg-red-600"
+        >
+          Obriši nalog
+        </button>
+      </div>
 
       {/* MODAL */}
       {showModal && (

@@ -10,8 +10,13 @@ function formatDateIso(date) {
 
 function LastWeekReports() {
   const todayIso = useMemo(() => formatDateIso(new Date()), []);
+  const today = new Date();
 
-  const [from, setFrom] = useState("");
+  const firstDayOfMonth = `${today.getFullYear()}-${String(
+    today.getMonth() + 1
+  ).padStart(2, "0")}-01`;
+
+  const [from, setFrom] = useState(firstDayOfMonth);
   const [to, setTo] = useState(todayIso);
   const [perBeer, setPerBeer] = useState([]);
 
@@ -51,7 +56,7 @@ function LastWeekReports() {
 
   return (
     <div className="pt-20 px-4">
-      <h1 className="text-xl font-semibold text-white">PRETHODNA NEDELJA</h1>
+      <h1 className="text-xl font-semibold text-white">PRETHODNI DANI</h1>
       <p className="text-white/70 mt-2">
         Izaberi opseg datuma, izvuci ukupno prosuto i prosuto za svaki artikal.
       </p>
