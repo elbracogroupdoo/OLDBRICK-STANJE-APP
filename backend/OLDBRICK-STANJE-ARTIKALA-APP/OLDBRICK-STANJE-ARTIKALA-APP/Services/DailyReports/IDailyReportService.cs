@@ -13,5 +13,6 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
         Task<(float totalMeasured, float totalApp)> GetTotalsForRangeAsync(List<int> reportIds);
         Task<List<BeerProsutoByBeerDto>> GetAppProsutoByBeerForRangeAsync(List<int> reportIds);
         Task RecalculateProsutoJednogPivaAsync(int idNaloga);
+
     }
 }

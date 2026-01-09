@@ -1,6 +1,8 @@
 function ReportDetails({ items }) {
   if (!items || items.length === 0) return null;
 
+  console.log("DTO STAVKE:", items);
+
   return (
     <div className="mt-6">
       {/* ===== MOBILE (kartice) ===== */}
@@ -15,7 +17,7 @@ function ReportDetails({ items }) {
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="text-sm font-semibold flex items-center gap-2">
-                  <span>Pivo {x.idPiva}</span>
+                  <span>{x.nazivPiva}</span>
                   <span
                     className={`text-xs px-2 py-0.5 rounded ${
                       isKesa
@@ -104,7 +106,7 @@ function ReportDetails({ items }) {
                 key={x.idPiva}
                 className="border-t border-white/10 hover:bg-white/5 transition"
               >
-                <td className="px-3 py-2 font-medium">{x.idPiva}</td>
+                <td className="px-3 py-2 font-medium">{x.nazivPiva}</td>
                 <td className="px-3 py-2 text-right">
                   <div className="text-xs text-gray-400">
                     {x.tipMerenja == "kesa" ? "BROJAČ start" : "Vaga start"}

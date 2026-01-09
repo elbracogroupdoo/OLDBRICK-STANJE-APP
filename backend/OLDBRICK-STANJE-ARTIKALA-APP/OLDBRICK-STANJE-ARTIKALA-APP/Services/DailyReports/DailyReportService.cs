@@ -142,13 +142,74 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
         }
         public async Task RecalculateProsutoJednogPivaAsync(int idNaloga)
         {
-            var states = await _context.DailyBeerStates.Where(s => s.IdNaloga == idNaloga)
-                .ToListAsync();
+            var currStates = await _context.DailyBeerStates
+                   .Where(s => s.IdNaloga == idNaloga)
+                   .ToListAsync();
 
-            foreach(var s in states)
+            if (currStates.Count == 0) return;
+
+            var beerIds = currStates.Select(s => s.IdPiva).Distinct().ToList();
+
+            var tipMer = await _context.Beers
+                .Where(b => beerIds.Contains(b.Id))
+                .ToDictionaryAsync(b => b.Id, b => (b.TipMerenja ?? "").Trim().ToLowerInvariant());
+
+            var prevReportId = await _context.DailyReports
+                .Where(r => r.IdNaloga < idNaloga)
+                .OrderByDescending(r => r.IdNaloga)
+                .Select(r => (int?)r.IdNaloga)
+                .FirstOrDefaultAsync();
+
+            if(prevReportId is null)
             {
-                s.ProsutoJednogPiva = s.StanjeUProgramu - s.Izmereno;
-                if (s.ProsutoJednogPiva < 0) s.ProsutoJednogPiva = 0;
+                foreach (var s in currStates) s.ProsutoJednogPiva = 0;
+                await _context.SaveChangesAsync();
+                return;
+            }
+
+            var prevStates = await _context.DailyBeerStates
+                .Where(s => s.IdNaloga == prevReportId.Value && beerIds.Contains(s.IdPiva))
+                .ToDictionaryAsync(s => s.IdPiva, s => s);
+
+            foreach(var curr in currStates)
+            {
+                prevStates.TryGetValue(curr.IdPiva, out var prev);
+
+                if(prev == null)
+                {
+                    curr.ProsutoJednogPiva = 0;
+                    continue;
+                }
+                var tip = tipMer.TryGetValue(curr.IdPiva, out var t) ? t : "";
+
+                var deltaProgram = prev.StanjeUProgramu - curr.StanjeUProgramu;
+
+                float deltaMeasured;
+
+                if (tip == "kesa")
+                {
+                    
+                    if (curr.Izmereno <= 0 || prev.Izmereno < 0)
+                    {
+                        curr.ProsutoJednogPiva = 0;
+                        continue;
+                    }
+
+                    deltaMeasured = curr.Izmereno - prev.Izmereno;
+                }
+                else
+                {
+                   
+                    deltaMeasured = prev.Izmereno - curr.Izmereno;
+                }
+
+              
+                if (deltaProgram < 0) deltaProgram = 0;
+                if (deltaMeasured < 0) deltaMeasured = 0;
+
+                
+                var prosuto = deltaMeasured - deltaProgram;
+                curr.ProsutoJednogPiva = prosuto > 0 ? prosuto : 0;
             }
             await _context.SaveChangesAsync();
         }

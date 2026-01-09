@@ -220,6 +220,18 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
             return Ok(result);
         }
 
+        [HttpPost("{idNaloga:int}/recalculate-prosuto-jednog-piva")]
+        public async Task<IActionResult> RecalculateProsutoJednogPiva([FromRoute] int idNaloga)
+        {
+            if (idNaloga <= 0) return BadRequest("IdNaloga nije validan.");
+
+            await _dailyReport.RecalculateProsutoJednogPivaAsync(idNaloga);
+
+            return NoContent();
+        }
+
     }
 
-}
+    
+
+    }
