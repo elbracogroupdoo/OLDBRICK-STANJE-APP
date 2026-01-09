@@ -91,7 +91,8 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 totalvagaPotrosnja += vagaPotrosnja;
                 totalposPotrosnja += posPotrosnja;
 
-                if (odstupanje < 0)
+                //if (odstupanje < 0) // u nasem slucaju ovo nam ne treba
+                // suma uzima i negativne i pozitivne vrednosti :) 
                     prosutoSum += Math.Abs(odstupanje);
 
                 result.Items.Add(new BeerCalcResultDto
