@@ -150,7 +150,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP
             var app = builder.Build();
 
 
-            app.UseHttpsRedirection();
+            //app.UseHttpsRedirection();
 
             app.UseCors(corsPolicyName);
 
