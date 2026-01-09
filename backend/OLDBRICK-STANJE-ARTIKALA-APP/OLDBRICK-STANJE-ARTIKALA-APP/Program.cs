@@ -31,23 +31,23 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP
             var cs = builder.Configuration.GetConnectionString("DefaultConnection");
             Console.WriteLine("CS: " + cs?.Replace("Password=", "Password=***"));
 
-            try
-            {
-                using var conn = new NpgsqlConnection(cs);
-                conn.Open();
+            //try
+            //{
+            //    using var conn = new NpgsqlConnection(cs);
+            //    conn.Open();
 
-                using var cmd = new NpgsqlCommand("select current_user", conn);
-                var user = cmd.ExecuteScalar()?.ToString();
+            //    using var cmd = new NpgsqlCommand("select current_user", conn);
+            //    var user = cmd.ExecuteScalar()?.ToString();
 
-                Console.WriteLine("CONNECTED as: " + user);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("DB CONNECT FAIL: " + ex.GetType().FullName);
-                Console.WriteLine(ex.Message);
-                Console.WriteLine(ex.InnerException?.Message);
-                throw;
-            }
+            //    Console.WriteLine("CONNECTED as: " + user);
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine("DB CONNECT FAIL: " + ex.GetType().FullName);
+            //    Console.WriteLine(ex.Message);
+            //    Console.WriteLine(ex.InnerException?.Message);
+            //    throw;
+            //}
 
             builder.Services.AddDbContext<AppDbContext>(opt =>
             opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -148,7 +148,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
-
+            app.UseDeveloperExceptionPage();
 
             //app.UseHttpsRedirection();
 
