@@ -69,7 +69,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 float vagaPotrosnja;
                 float posPotrosnja;
 
-                if (tipMerenja == "Bure")
+                if (tipMerenja == "Bure"|| tipMerenja == "Kafa")
                 {
                     vagaPotrosnja = startVaga - endVaga;
                     posPotrosnja = startPos - endPos;
@@ -86,15 +86,23 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
 
                 var odstupanje = posPotrosnja - vagaPotrosnja;
 
-                totalvagaPotrosnja += vagaPotrosnja;
-                totalposPotrosnja += posPotrosnja;
+                var includeInProsuto = !string.Equals(tipMerenja, "Kafa", StringComparison.OrdinalIgnoreCase);
 
-                // ✅ NETO SUMA: prvo saberi negativne i pozitivne posebno
-                if (odstupanje < 0) sumNeg += odstupanje;   // ostaje negativno
-                else sumPos += odstupanje;                  // pozitivno
 
-                // ✅ krajnji rezultat (neto) u prosutoSum (možeš i na kraju petlje, ali ovako ti je jasno)
-                prosutoSum = sumNeg + sumPos;
+                if (includeInProsuto)
+                {
+                    totalvagaPotrosnja += vagaPotrosnja;
+                    totalposPotrosnja += posPotrosnja;
+
+                    //  NETO SUMA: prvo saberi negativne i pozitivne posebno
+                    if (odstupanje < 0) sumNeg += odstupanje;   // ostaje negativno
+                    else sumPos += odstupanje;                  // pozitivno
+
+
+                    prosutoSum = sumNeg + sumPos;
+                }
+
+                
 
                 result.Items.Add(new BeerCalcResultDto
                 {
@@ -219,7 +227,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 //   dok POS logika (startPos - endPos) ostaje ista
                 // koristim vrednost za svako pivo a to je tipMerenja i na osnovu toga znam 
                 // koja logika gde ide za proracun!
-                if (tip == "bure")
+                if (tip == "bure" || tip == "kafa")
                 {
                     vagaPotrosnja = (vagaStart + added) - vagaEnd;
                     posPotrosnja = (posStart + added) - posEnd;

@@ -148,7 +148,10 @@ function LastWeekReports() {
                 >
                   <span className="text-white/80">{item.beerName}</span>
 
-                  <span className="font-medium">{item.totalAppProsuto} L</span>
+                  <span className="font-medium">
+                    {item.totalAppProsuto}{" "}
+                    {item.beerName === "Kafa" ? "G" : "L"}
+                  </span>
                 </div>
               ))}
             </div>
