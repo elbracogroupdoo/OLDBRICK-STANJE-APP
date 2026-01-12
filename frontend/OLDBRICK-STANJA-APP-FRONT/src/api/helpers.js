@@ -136,6 +136,15 @@ async function getDayBeforeStates(idNaloga){
     return data;
 }
 
+async function getDailyReportByDateWithBiggerOutput(datum){
+    const {data} = await httpClient.get("/api/dailyreports/use-date", {params: {
+        datum
+    },});
+    return data;
+}
+
+
+
 
 export {
     getReportStatesById,
@@ -157,5 +166,6 @@ export {
     updateDailyReportStatusAndCalculate,
     updateProsutoKantaAndRecalculate,
     getTotalPotrosnjaVagaAndPos,
-    getDayBeforeStates
+    getDayBeforeStates,
+    getDailyReportByDateWithBiggerOutput
 };

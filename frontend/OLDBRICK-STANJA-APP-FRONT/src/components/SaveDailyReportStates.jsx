@@ -161,6 +161,11 @@ function SaveDailyReportStates({ idNaloga }) {
     }
   }
 
+  function handleClearInputs() {
+    setValues({});
+    localStorage.removeItem(STORAGE_KEY);
+  }
+
   useEffect(() => {
     getAllArticles().then(setArticles).catch(console.error);
   }, []);
@@ -188,6 +193,21 @@ function SaveDailyReportStates({ idNaloga }) {
       })
       .catch(console.error);
   }, [idNaloga]);
+
+  const STORAGE_KEY = `daily-values-${idNaloga}`;
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) setValues(JSON.parse(raw));
+    } catch {}
+  }, [idNaloga]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
+    } catch {}
+  }, [values, idNaloga]);
 
   const articleOrder = [
     "Stara cigla svetla",
@@ -278,6 +298,15 @@ function SaveDailyReportStates({ idNaloga }) {
                 className="rounded-md bg-[#2A2F36] px-4 py-2 text-white hover:opacity-90"
               >
                 Dodaj količine
+              </button>
+              <button
+                type="button"
+                onClick={handleClearInputs}
+                className="mt-4 rounded-lg border border-red-500/40
+             px-4 py-2 text-sm text-red-400
+             hover:bg-red-500/10 transition"
+              >
+                Obriši unose
               </button>
               {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center">

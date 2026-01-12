@@ -57,8 +57,14 @@ function LastWeekReports() {
     }
   }
 
+  function getValueColor(value) {
+    if (value > 0) return "text-green-400";
+    if (value < 0) return "text-red-400";
+    return "text-yellow-400";
+  }
+
   return (
-    <div className="pt-20 px-4">
+    <div className="pt-20 px-4 max-w-xl mx-auto">
       <h1 className="text-xl font-semibold text-white">PRETHODNI DANI</h1>
       <p className="text-white/70 mt-2">
         Izaberi opseg datuma, izvuci ukupno prosuto i prosuto za svaki artikal.
@@ -112,27 +118,35 @@ function LastWeekReports() {
               <span className="text-white">{result.to}</span>
             </div>
 
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="rounded-lg bg-white/5 ring-1 ring-white/10 p-3">
-                <div className="text-white/70 text-xs">Sa vage</div>
-                <div className="text-lg font-semibold">
+                <div className="text-white/70 text-xs">OTPIS</div>
+                <div
+                  className={`text-lg font-semibold ${getValueColor(
+                    result.totalMEasuredProsuto
+                  )}`}
+                >
                   {result.totalMEasuredProsuto}L
                 </div>
               </div>
 
               <div className="rounded-lg bg-white/5 ring-1 ring-white/10 p-3">
-                <div className="text-white/70 text-xs">Iz app</div>
-                <div className="text-lg font-semibold">
+                <div className="text-white/70 text-xs">MANJAK</div>
+                <div
+                  className={`text-lg font-semibold ${getValueColor(
+                    result.totalAppProsuto
+                  )}`}
+                >
                   {result.totalAppProsuto}L
                 </div>
               </div>
 
-              <div className="rounded-lg bg-white/5 ring-1 ring-white/10 p-3">
+              {/* <div className="rounded-lg bg-white/5 ring-1 ring-white/10 p-3">
                 <div className="text-white/70 text-xs">Razlika</div>
                 <div className="text-lg font-semibold">
                   {result.totalDifference}L
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         )}

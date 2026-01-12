@@ -3,6 +3,7 @@ import {
   getReportStatesById,
   getNalogByDate,
   getTotalPotrosnjaVagaAndPos,
+  getDailyReportByDateWithBiggerOutput,
 } from "../api/helpers";
 import ReportDetails from "./ReportDetails";
 
@@ -14,7 +15,7 @@ function DailyReportPreview({ datum, onidNalogaResolved }) {
 
   useEffect(() => {
     if (!datum) return;
-    getNalogByDate(datum)
+    getDailyReportByDateWithBiggerOutput(datum)
       .then((res) => {
         setIdNaloga(res.idNaloga);
         onidNalogaResolved?.(res.idNaloga);
@@ -46,7 +47,7 @@ function DailyReportPreview({ datum, onidNalogaResolved }) {
   return (
     <div className="mt-6">
       <h3 className="text-center text-lg text-gray-300 mb-3">
-        Prosuto po aplikaciji:{" "}
+        Manjak vaga - potrošnja POS:{" "}
         <span
           className={`font-semibold ${
             data.totalProsuto < 0 ? "text-green-400" : "text-red-400"
@@ -56,7 +57,7 @@ function DailyReportPreview({ datum, onidNalogaResolved }) {
         </span>
       </h3>
       <h3 className="text-center text-lg text-gray-300 mb-3">
-        Prosuto na vagi:{" "}
+        OTPIS:{" "}
         <span
           className={`font-semibold ${
             data.prosutoKanta < 0 ? "text-green-400" : "text-red-400"
