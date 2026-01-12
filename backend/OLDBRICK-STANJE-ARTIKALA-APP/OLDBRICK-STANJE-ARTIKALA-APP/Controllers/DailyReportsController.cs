@@ -230,7 +230,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
             return NoContent();
         }
 
-        [HttpGet("{idNaloga}/total-potrosnja")]
+        [HttpGet("{idNaloga}/total-potrosnja-VAGA-POS")]
         public async Task<ActionResult<TotalPotrosnjaDto>> GetTotalPotrosnja(
     int idNaloga)
         {

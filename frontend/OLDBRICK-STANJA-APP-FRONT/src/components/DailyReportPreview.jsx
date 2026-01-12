@@ -1,11 +1,16 @@
 import { useEffect, useState } from "react";
-import { getReportStatesById, getNalogByDate } from "../api/helpers";
+import {
+  getReportStatesById,
+  getNalogByDate,
+  getTotalPotrosnjaVagaAndPos,
+} from "../api/helpers";
 import ReportDetails from "./ReportDetails";
 
 function DailyReportPreview({ datum, onidNalogaResolved }) {
   const [data, setData] = useState(null);
   const [idNaloga, setIdNaloga] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
+  const [totals, setTotals] = useState(null);
 
   useEffect(() => {
     if (!datum) return;
@@ -25,6 +30,14 @@ function DailyReportPreview({ datum, onidNalogaResolved }) {
 
     getReportStatesById(idNaloga).then(setData).catch(console.error);
   }, [idNaloga]);
+
+  useEffect(() => {
+    if (!idNaloga) return;
+
+    getTotalPotrosnjaVagaAndPos(idNaloga).then(setTotals).catch(console.error);
+  }, [idNaloga]);
+
+  console.log("TOTALS IN DailyReportPreview:", totals);
 
   if (!data) {
     return <div>Loading...</div>;
@@ -91,7 +104,7 @@ function DailyReportPreview({ datum, onidNalogaResolved }) {
             </div>
 
             {/* CONTENT */}
-            <ReportDetails items={data.items} />
+            <ReportDetails items={data.items} totals={totals} />
           </div>
         </div>
       )}

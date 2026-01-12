@@ -1,7 +1,8 @@
-function ReportDetails({ items }) {
+function ReportDetails({ items, totals }) {
   if (!items || items.length === 0) return null;
 
   console.log("DTO STAVKE:", items);
+  console.log("POTROSNJA VAGA I POS:", totals);
 
   return (
     <div className="mt-6">
@@ -94,6 +95,32 @@ function ReportDetails({ items }) {
             </div>
           );
         })}
+        <div className="mt-4 rounded-lg border border-white/10 bg-white/5 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-300">
+              UKUPNA POTROŠNJA
+            </h3>
+            <span className="text-xs text-gray-400">
+              Nalog: {totals?.idNaloga ?? "—"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="rounded-md bg-black/20 p-3">
+              <div className="text-xs text-gray-400 mb-1">Ukupno VAGA</div>
+              <div className="text-lg font-semibold text-blue-300">
+                {totals ? Number(totals.totalVagaPotrosnja).toFixed(2) : "—"}
+              </div>
+            </div>
+
+            <div className="rounded-md bg-black/20 p-3">
+              <div className="text-xs text-gray-400 mb-1">Ukupno POS</div>
+              <div className="text-lg font-semibold text-green-300">
+                {totals ? Number(totals.totalPosPotrosnja).toFixed(2) : "—"}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* ===== DESKTOP / TABLET (tabela) ===== */}
@@ -169,6 +196,33 @@ function ReportDetails({ items }) {
             ))}
           </tbody>
         </table>
+        {/* ===== DESKTOP TOTALS ===== */}
+        <div className="border-t border-white/10 bg-white/5 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-gray-300">
+              UKUPNA POTROŠNJA
+            </h3>
+            <span className="text-xs text-gray-400">
+              Nalog: {totals?.idNaloga ?? "—"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="rounded-md bg-black/20 p-3">
+              <div className="text-xs text-gray-400 mb-1">Ukupno VAGA</div>
+              <div className="text-lg font-semibold text-blue-300">
+                {totals ? Number(totals.totalVagaPotrosnja).toFixed(2) : "—"}
+              </div>
+            </div>
+
+            <div className="rounded-md bg-black/20 p-3">
+              <div className="text-xs text-gray-400 mb-1">Ukupno POS</div>
+              <div className="text-lg font-semibold text-green-300">
+                {totals ? Number(totals.totalPosPotrosnja).toFixed(2) : "—"}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

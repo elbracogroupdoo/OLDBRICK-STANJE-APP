@@ -119,6 +119,14 @@ async function updateProsutoKantaAndRecalculate(idNaloga, prosutoKanta){
   );
   return data;
 }
+// POTROSNJA VAGE I POS-A ZA SVAKI ID NALOGA
+async function getTotalPotrosnjaVagaAndPos(idNaloga){
+ if(!idNaloga) throw new Error("idNaloga is required");
+
+ const {data} = await httpClient.get(`/api/dailyreports/${idNaloga}/total-potrosnja-VAGA-POS`);
+
+ return data;
+}
 
 
 export {
@@ -139,5 +147,6 @@ export {
     addMoreBeerQuantity,
     deleteDailyReport,
     updateDailyReportStatusAndCalculate,
-    updateProsutoKantaAndRecalculate
+    updateProsutoKantaAndRecalculate,
+    getTotalPotrosnjaVagaAndPos
 };
