@@ -240,17 +240,63 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 TotalPosPotrosnja = MathF.Round(totalPos, 2)
             };
         }
-        //CITANJE
-        public async Task<TotalPotrosnjaDto> GetTotalPotrosnjaVagaAndPOS(int idNaloga)
-        {
-            var (_, totalVaga, totalPos) = await _prosutoService.CalcProsutoForPotrosnjaVagaAndPos(idNaloga);
 
-            return new TotalPotrosnjaDto
+
+        //CITANJE
+        public async Task<ProsutoWithTotalPotrosnjaDto> GetTotalPotrosnjaVagaAndPOS(int idNaloga)
+        {
+            var (result, totalVaga, totalPos) =
+        await _prosutoService.CalcProsutoForPotrosnjaVagaAndPos(idNaloga);
+
+            return new ProsutoWithTotalPotrosnjaDto
             {
-                IdNaloga = idNaloga,
-                TotalVagaPotrosnja = MathF.Round(totalVaga, 2),
-                TotalPosPotrosnja = MathF.Round(totalPos, 2)
+                Prosuto = result, // u sebi ima Items : List<BeerCalcResultDto>
+                Totals = new TotalPotrosnjaDto
+                {
+                    IdNaloga = idNaloga,
+                    TotalVagaPotrosnja = MathF.Round(totalVaga, 2),
+                    TotalPosPotrosnja = MathF.Round(totalPos, 2)
+                }
             };
+        }
+
+        public async Task<List<DayBeforeStateDto>> GetDayBeforeStates(int idNaloga)
+        {
+            var report = await _context.DailyReports
+                .FirstOrDefaultAsync(x => x.IdNaloga == idNaloga);
+            if(report == null)
+            {
+                throw new ArgumentException("Dnevni nalog ne postoji");
+            }
+
+            var dayBeforeReport = await _context.DailyReports
+                .Where(r => r.Datum < report.Datum)
+                .OrderByDescending(r => r.Datum)
+                .FirstOrDefaultAsync();
+
+            if (dayBeforeReport == null)
+            {
+                return new List<DayBeforeStateDto>();
+            }
+
+            var prevIdNaloga = dayBeforeReport.IdNaloga;
+
+            var result = await _context.DailyBeerStates
+                .Where(s => s.IdNaloga == prevIdNaloga)
+                .Join(_context.Beers,
+            s => s.IdPiva,
+            b => b.Id,
+            (s, b) => new DayBeforeStateDto
+            {
+                IdPiva = s.IdPiva,
+                NazivPiva = b.NazivPiva,
+                TipMerenja = b.TipMerenja,
+                PrevVaga = s.Izmereno,
+                PrevPos = s.StanjeUProgramu
+            })
+                .ToListAsync();
+
+            return result;
         }
 
     }

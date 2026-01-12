@@ -10,6 +10,7 @@ import {
   deleteDailyReport,
   updateDailyReportStatusAndCalculate,
   updateProsutoKantaAndRecalculate,
+  getDayBeforeStates,
 } from "../api/helpers";
 import ProsutoKantaForm from "./ProsutoKantaForm";
 import AddQuantityBatch from "./AddQuantityBatch";
@@ -26,6 +27,8 @@ function SaveDailyReportStates({ idNaloga }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [msg, setMsg] = useState("");
   const [mode, setMode] = useState("create");
+  const [dayBeforeState, setDayBeforeState] = useState([]);
+  const [prevMap, setPrevMap] = useState({});
 
   function handleChange(idPiva, field, value) {
     setValues((prev) => ({
@@ -174,6 +177,18 @@ function SaveDailyReportStates({ idNaloga }) {
       .finally(() => setLoading(false));
   }, [idNaloga]);
 
+  useEffect(() => {
+    if (!idNaloga) return;
+
+    getDayBeforeStates(idNaloga)
+      .then((arr) => {
+        setDayBeforeState(arr);
+        const map = Object.fromEntries(arr.map((x) => [x.idPiva, x]));
+        setPrevMap(map);
+      })
+      .catch(console.error);
+  }, [idNaloga]);
+
   const articleOrder = [
     "Stara cigla svetla",
     "Stara cigla IPA",
@@ -291,11 +306,11 @@ function SaveDailyReportStates({ idNaloga }) {
               </button>
             </div>
 
-            {/* CONTENT (tvoja postojeća forma) */}
             <div className="space-y-4">
               {displayArticles.map((b) => {
                 const isKesa =
                   (b.tipMerenja || "").trim().toLowerCase() === "kesa";
+                const prev = prevMap[b.id]; // JUCERASNJE VREDNOSTI ZA SVAKO PIVO
 
                 return (
                   <div
@@ -304,6 +319,26 @@ function SaveDailyReportStates({ idNaloga }) {
                   >
                     <div className="font-semibold text-white mb-2">
                       {b.nazivPiva}
+                    </div>
+
+                    <div className="mb-2 flex items-center justify-between text-xs text-gray-400">
+                      <span>
+                        Prethodni dan {isKesa ? "BROJAČ" : "VAGA"}:{" "}
+                        <span className="text-gray-200 font-medium">
+                          {prev?.prevVaga != null
+                            ? Number(prev.prevVaga).toFixed(2)
+                            : "—"}
+                        </span>
+                      </span>
+
+                      <span>
+                        Prethodni dan PROGRAM:{" "}
+                        <span className="text-gray-200 font-medium">
+                          {prev?.prevPos != null
+                            ? Number(prev.prevPos).toFixed(2)
+                            : "—"}
+                        </span>
+                      </span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3">
@@ -315,7 +350,9 @@ function SaveDailyReportStates({ idNaloga }) {
                           handleChange(b.id, "izmereno", e.target.value)
                         }
                         className={`rounded bg-white/10 px-3 py-2 text-white
-    ${isKesa ? "placeholder:text-blue-400" : "placeholder:text-gray-400"}`}
+          ${
+            isKesa ? "placeholder:text-blue-400" : "placeholder:text-gray-400"
+          }`}
                       />
 
                       <input

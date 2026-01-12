@@ -128,6 +128,14 @@ async function getTotalPotrosnjaVagaAndPos(idNaloga){
  return data;
 }
 
+async function getDayBeforeStates(idNaloga){
+    if (!idNaloga) throw new Error("idNaloga is required");
+
+    const {data} = await httpClient.get(`/api/dailyreports/${idNaloga}/day-before-states`)
+
+    return data;
+}
+
 
 export {
     getReportStatesById,
@@ -148,5 +156,6 @@ export {
     deleteDailyReport,
     updateDailyReportStatusAndCalculate,
     updateProsutoKantaAndRecalculate,
-    getTotalPotrosnjaVagaAndPos
+    getTotalPotrosnjaVagaAndPos,
+    getDayBeforeStates
 };

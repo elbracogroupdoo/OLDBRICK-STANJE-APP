@@ -15,7 +15,9 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
         Task RecalculateProsutoJednogPivaAsync(int idNaloga);
         Task<TotalPotrosnjaDto> PostTotalPotrosnjaVagaAndPOS(int idNaloga);
 
-        Task<TotalPotrosnjaDto> GetTotalPotrosnjaVagaAndPOS(int idNaloga);
+        Task<ProsutoWithTotalPotrosnjaDto> GetTotalPotrosnjaVagaAndPOS(int idNaloga);
+
+        Task<List<DayBeforeStateDto>> GetDayBeforeStates(int idNaloga);
 
     }
 }

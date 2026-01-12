@@ -109,14 +109,18 @@ function ReportDetails({ items, totals }) {
             <div className="rounded-md bg-black/20 p-3">
               <div className="text-xs text-gray-400 mb-1">Ukupno VAGA</div>
               <div className="text-lg font-semibold text-blue-300">
-                {totals ? Number(totals.totalVagaPotrosnja).toFixed(2) : "—"}
+                {totals
+                  ? Number(totals.totals.totalVagaPotrosnja).toFixed(2)
+                  : "—"}
               </div>
             </div>
 
             <div className="rounded-md bg-black/20 p-3">
               <div className="text-xs text-gray-400 mb-1">Ukupno POS</div>
               <div className="text-lg font-semibold text-green-300">
-                {totals ? Number(totals.totalPosPotrosnja).toFixed(2) : "—"}
+                {totals
+                  ? Number(totals.totals.totalPosPotrosnja).toFixed(2)
+                  : "—"}
               </div>
             </div>
           </div>
@@ -173,13 +177,28 @@ function ReportDetails({ items, totals }) {
                   </div>
                 </td>
                 <td className="px-3 py-2 text-right">
-                  {Number(x.posStart).toFixed(2)}
+                  <div className="text-xs text-gray-400">
+                    {x.tipMerenja === "kesa" ? "BROJAČ pot." : "Vaga pot."}
+                  </div>
+                  <div className="font-semibold">
+                    {Number(x.posStart).toFixed(2)}
+                  </div>
                 </td>
                 <td className="px-3 py-2 text-right">
-                  {Number(x.posEnd).toFixed(2)}
+                  <div className="text-xs text-gray-400">
+                    {x.tipMerenja === "kesa" ? "BROJAČ pot." : "Vaga pot."}
+                  </div>
+                  <div className="font-semibold">
+                    {Number(x.posEnd).toFixed(2)}
+                  </div>
                 </td>
                 <td className="px-3 py-2 text-right">
-                  {Number(x.posPotrosnja).toFixed(2)}
+                  <div className="text-xs text-gray-400">
+                    {x.tipMerenja === "kesa" ? "BROJAČ pot." : "Vaga pot."}
+                  </div>
+                  <div className="font-semibold">
+                    {Number(x.posPotrosnja).toFixed(2)}
+                  </div>
                 </td>
                 <td
                   className={`px-3 py-2 text-right font-semibold ${
@@ -211,14 +230,18 @@ function ReportDetails({ items, totals }) {
             <div className="rounded-md bg-black/20 p-3">
               <div className="text-xs text-gray-400 mb-1">Ukupno VAGA</div>
               <div className="text-lg font-semibold text-blue-300">
-                {totals ? Number(totals.totalVagaPotrosnja).toFixed(2) : "—"}
+                {totals
+                  ? Number(totals.totals.totalVagaPotrosnja).toFixed(2)
+                  : "—"}
               </div>
             </div>
 
             <div className="rounded-md bg-black/20 p-3">
               <div className="text-xs text-gray-400 mb-1">Ukupno POS</div>
               <div className="text-lg font-semibold text-green-300">
-                {totals ? Number(totals.totalPosPotrosnja).toFixed(2) : "—"}
+                {totals
+                  ? Number(totals.totals.totalPosPotrosnja).toFixed(2)
+                  : "—"}
               </div>
             </div>
           </div>

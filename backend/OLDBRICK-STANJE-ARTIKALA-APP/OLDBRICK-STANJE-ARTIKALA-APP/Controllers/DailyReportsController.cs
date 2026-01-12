@@ -243,6 +243,17 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
             return Ok(result);
         }
 
+        [HttpGet("{idNaloga}/day-before-states")]
+        public async Task<ActionResult<List<DayBeforeStateDto>>> GetDayBeforeStates(int idNaloga)
+        {
+            if (idNaloga <= 0)
+                return BadRequest("IdNaloga nije validan.");
+
+            var result = await _dailyReport.GetDayBeforeStates(idNaloga);
+
+            return Ok(result); // moze biti prazna lista ako nema prethodnog dana
+        }
+
     }
 
     
