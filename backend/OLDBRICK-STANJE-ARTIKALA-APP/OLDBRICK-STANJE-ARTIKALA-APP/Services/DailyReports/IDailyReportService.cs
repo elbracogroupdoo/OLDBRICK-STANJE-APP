@@ -19,5 +19,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
 
         Task<List<DayBeforeStateDto>> GetDayBeforeStates(int idNaloga);
 
+        Task<PotrosnjaSinceLastInventoryDto> GetTotalsSinceLastInventoryAsync(int idNaloga);
+
     }
 }

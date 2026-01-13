@@ -24,7 +24,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Datum == datum);
 
-            if(existing != null)
+            if (existing != null)
             {
                 return new DailyReportResponseDto
                 {
@@ -61,7 +61,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
             var report = await _context.DailyReports.AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Datum == datum);
 
-            if(report == null)
+            if (report == null)
             {
                 throw new KeyNotFoundException($"Daily report for date {datum} not found.");
             }
@@ -126,7 +126,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
 
         public async Task<List<BeerProsutoByBeerDto>> GetAppProsutoByBeerForRangeAsync(List<int> reportIds)
         {
-            if(reportIds == null || reportIds.Count == 0)
+            if (reportIds == null || reportIds.Count == 0)
                 return new List<BeerProsutoByBeerDto>();
 
             var result = await _context.DailyBeerStates
@@ -163,7 +163,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 .Select(r => (int?)r.IdNaloga)
                 .FirstOrDefaultAsync();
 
-            if(prevReportId is null)
+            if (prevReportId is null)
             {
                 foreach (var s in currStates) s.ProsutoJednogPiva = 0;
                 await _context.SaveChangesAsync();
@@ -174,11 +174,11 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 .Where(s => s.IdNaloga == prevReportId.Value && beerIds.Contains(s.IdPiva))
                 .ToDictionaryAsync(s => s.IdPiva, s => s);
 
-            foreach(var curr in currStates)
+            foreach (var curr in currStates)
             {
                 prevStates.TryGetValue(curr.IdPiva, out var prev);
 
-                if(prev == null)
+                if (prev == null)
                 {
                     curr.ProsutoJednogPiva = 0;
                     continue;
@@ -191,7 +191,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
 
                 if (tip == "kesa")
                 {
-                    
+
                     if (curr.Izmereno <= 0 || prev.Izmereno < 0)
                     {
                         curr.ProsutoJednogPiva = 0;
@@ -202,15 +202,15 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 }
                 else
                 {
-                   
+
                     deltaMeasured = prev.Izmereno - curr.Izmereno;
                 }
 
-              
+
                 if (deltaProgram < 0) deltaProgram = 0;
                 if (deltaMeasured < 0) deltaMeasured = 0;
 
-                
+
                 var prosuto = deltaMeasured - deltaProgram;
                 curr.ProsutoJednogPiva = prosuto > 0 ? prosuto : 0;
             }
@@ -264,7 +264,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
         {
             var report = await _context.DailyReports
                 .FirstOrDefaultAsync(x => x.IdNaloga == idNaloga);
-            if(report == null)
+            if (report == null)
             {
                 throw new ArgumentException("Dnevni nalog ne postoji");
             }
@@ -297,6 +297,87 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 .ToListAsync();
 
             return result;
+        }
+
+        public async Task<PotrosnjaSinceLastInventoryDto> GetTotalsSinceLastInventoryAsync(int idNaloga)
+        {
+            if (idNaloga <= 0) throw new ArgumentException("IdNaloga nije validan.");
+
+            // 1) "to" = datum naloga (front ne treba da zna datum)
+            var to = await _context.DailyReports
+                .Where(r => r.IdNaloga == idNaloga)
+                .Select(r => (DateOnly?)r.Datum)
+                .FirstOrDefaultAsync();
+
+            if (to == null)
+                throw new ArgumentException("Nalog ne postoji.");
+
+            // 2) poslednji popis
+            var lastReset = await _context.InventoryResets
+                .OrderByDescending(x => x.DatumPopisa)
+                .FirstOrDefaultAsync();
+
+            // 3) "from" = sutradan posle popisa (popis uvece vecinski)
+            DateOnly from;
+            if (lastReset == null)
+            {
+                var first = await _context.DailyReports
+                    .OrderBy(r => r.Datum)
+                    .Select(r => (DateOnly?)r.Datum)
+                    .FirstOrDefaultAsync();
+
+                from = first ?? to.Value;
+            }
+            else
+            {
+                var resetDate = DateOnly.FromDateTime(lastReset.DatumPopisa.Date);
+                from = resetDate.AddDays(1);
+            }
+
+            // 4) ako popis presece tako da nema opsega
+            if (from > to.Value)
+            {
+                return new PotrosnjaSinceLastInventoryDto
+                {
+                    From = from,
+                    To = to.Value,
+                    TotalVagaFromInventoryPotrosnja = 0f,
+                    TotalPosFromInventoryPotrosnja = 0f,
+                    TotalFromInventoryProsuto = 0f
+                };
+            }
+
+            // 5) ids u periodu od do
+            var ids = await _context.DailyReports
+                .Where(r => r.Datum >= from && r.Datum <= to.Value)
+                .Select(r => r.IdNaloga)
+                .ToListAsync();
+
+            // 6) Otpis (rucno prosuto) u periodu
+            var totalOtpis = await _context.DailyReports
+                .Where(r => r.Datum >= from && r.Datum <= to.Value)
+                .SumAsync(r => (float?)r.IzmerenoProsuto) ?? 0f;
+
+            // 7) saberi vaga/pos potrošnju po danima, imam tu metodu
+            float totalVaga = 0f;
+            float totalPos = 0f;
+
+            foreach (var dayIdNaloga in ids)
+            {
+                var (_, dayVaga, dayPos) = await _prosutoService.CalcProsutoForPotrosnjaVagaAndPos(dayIdNaloga);
+                totalVaga += dayVaga;
+                totalPos += dayPos;
+            }
+
+            return new PotrosnjaSinceLastInventoryDto
+            {
+                From = from,
+                To = to.Value,
+                TotalVagaFromInventoryPotrosnja = totalVaga,
+                TotalPosFromInventoryPotrosnja = totalPos,
+                TotalFromInventoryProsuto = totalOtpis
+                // TotalFromInventoryProsutoPoApp computed u DTO (POS - VAGA) razlika ->  manjak
+            };
         }
 
     }

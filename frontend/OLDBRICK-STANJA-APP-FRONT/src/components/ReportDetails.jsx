@@ -177,25 +177,19 @@ function ReportDetails({ items, totals }) {
                   </div>
                 </td>
                 <td className="px-3 py-2 text-right">
-                  <div className="text-xs text-gray-400">
-                    {x.tipMerenja === "kesa" ? "BROJAČ pot." : "Vaga pot."}
-                  </div>
+                  <div className="text-xs text-gray-400">Pos start</div>
                   <div className="font-semibold">
                     {Number(x.posStart).toFixed(2)}
                   </div>
                 </td>
                 <td className="px-3 py-2 text-right">
-                  <div className="text-xs text-gray-400">
-                    {x.tipMerenja === "kesa" ? "BROJAČ pot." : "Vaga pot."}
-                  </div>
+                  <div className="text-xs text-gray-400">Pos end</div>
                   <div className="font-semibold">
                     {Number(x.posEnd).toFixed(2)}
                   </div>
                 </td>
                 <td className="px-3 py-2 text-right">
-                  <div className="text-xs text-gray-400">
-                    {x.tipMerenja === "kesa" ? "BROJAČ pot." : "Vaga pot."}
-                  </div>
+                  <div className="text-xs text-gray-400">Pos pot.</div>
                   <div className="font-semibold">
                     {Number(x.posPotrosnja).toFixed(2)}
                   </div>

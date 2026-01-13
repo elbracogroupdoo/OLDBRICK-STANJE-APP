@@ -18,6 +18,8 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Data
 
         public DbSet<Restock> Restocks => Set<Restock>();
 
+        public DbSet<InventoryReset> InventoryResets => Set<InventoryReset>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Users>(e =>
@@ -100,6 +102,19 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Data
                 e.Property(e => e.IdNaloga).HasColumnName("id_naloga");
                 e.Property(e => e.IdPiva).HasColumnName("id_piva");
                 e.Property(e => e.Quantity).HasColumnName("quantity");
+            });
+
+            modelBuilder.Entity<InventoryReset>(e =>
+            {
+                e.ToTable("inventory_resets");
+                e.HasKey(e => e.Id);
+                e.Property(e => e.Id).HasColumnName("id");
+
+                e.Property(e => e.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("now()")
+                .ValueGeneratedOnAdd();
+
+                e.Property(e => e.DatumPopisa).HasColumnName("datum_popisa");
+                e.Property(e => e.Napomena).HasColumnName("napomena");
             });
         }
     }

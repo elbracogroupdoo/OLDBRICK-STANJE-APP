@@ -254,6 +254,13 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
             return Ok(result); // moze biti prazna lista ako nema prethodnog dana
         }
 
+        [HttpGet("{idNaloga:int}/totals-since-last-inventory")]
+        public async Task<IActionResult> GetTotalsSinceLastInventory(int idNaloga)
+        {
+            var dto = await _dailyReport.GetTotalsSinceLastInventoryAsync(idNaloga);
+            return Ok(dto);
+        }
+
     }
 
     
