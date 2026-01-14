@@ -22,7 +22,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
 
         Task<PotrosnjaSinceLastInventoryDto> GetTotalsSinceLastInventoryAsync(int idNaloga);
 
-        Task<long> CreateInventoryDate([FromBody] CreateInventoryResetDto dto);
+        Task<object> CreateInventoryDate([FromBody] CreateInventoryResetDto dto);
 
     }
 }

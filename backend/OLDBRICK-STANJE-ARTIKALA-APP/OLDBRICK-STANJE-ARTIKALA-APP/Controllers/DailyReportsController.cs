@@ -266,13 +266,8 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
         {
             try
             {
-                var id = await _dailyReport.CreateInventoryDate(dto);
-                return Ok(new
-                {
-                    id,
-                    datumPopisa = dto.DatumPopisa,
-                    dto.Napomena
-                });
+                var result = await _dailyReport.CreateInventoryDate(dto);
+                return Ok(result);
             }
             catch (ArgumentException ex)
             {

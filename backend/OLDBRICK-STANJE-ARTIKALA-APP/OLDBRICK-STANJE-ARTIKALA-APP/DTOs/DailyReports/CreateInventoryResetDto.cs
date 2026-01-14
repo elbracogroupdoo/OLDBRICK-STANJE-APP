@@ -4,5 +4,7 @@
     {
         public DateOnly DatumPopisa { get; set; }
         public string? Napomena { get; set; }
+
+        public List<KesaPosOverrideDto> KesaPosOverrides { get; set; }
     }
 }

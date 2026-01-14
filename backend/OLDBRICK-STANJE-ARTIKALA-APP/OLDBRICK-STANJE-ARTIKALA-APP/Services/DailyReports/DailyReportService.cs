@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using OLDBRICK_STANJE_ARTIKALA_APP.Data;
+using OLDBRICK_STANJE_ARTIKALA_APP.DTOs.Beers;
 using OLDBRICK_STANJE_ARTIKALA_APP.DTOs.DailyReports;
 using OLDBRICK_STANJE_ARTIKALA_APP.DTOs.RangeReports;
 using OLDBRICK_STANJE_ARTIKALA_APP.Entities;
@@ -381,7 +382,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
             };
         }
 
-        public async Task<long> CreateInventoryDate([FromBody] CreateInventoryResetDto dto)
+        public async Task<object> CreateInventoryDate([FromBody] CreateInventoryResetDto dto)
         {
             if (dto == null) throw new ArgumentException("Body je prazan.");
             if (dto.DatumPopisa == default) throw new ArgumentException("DatumPopisa nije validan.");
@@ -390,6 +391,48 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 .AnyAsync(x => DateOnly.FromDateTime(x.DatumPopisa.Date) == dto.DatumPopisa);
 
             if (exists) throw new ArgumentException("Popis za taj datum već postoji.");
+
+            var report = await _context.DailyReports
+                .FirstOrDefaultAsync(x => x.Datum == dto.DatumPopisa);
+            if (report == null)
+            {
+                throw new ArgumentException("Ne postoji dnevni nalog za izabrani datum");
+
+
+            }
+
+            var states = await _context.DailyBeerStates.Where(s => s.IdNaloga == report.IdNaloga).ToListAsync();
+
+            if (states.Count == 0)
+                throw new ArgumentException("Nema unetih stanja za taj nalog.");
+
+            var beerIds = states.Select(s => s.IdPiva).Distinct().ToList();
+
+            var beers = await _context.Beers.Where(b => beerIds.Contains(b.Id))
+                .Select(b => new
+                {
+                    b.Id,
+                    b.NazivPiva,
+                    Tip = (b.TipMerenja ?? "").Trim().ToLowerInvariant()
+                }).ToListAsync();
+
+            var tipMap = beers.ToDictionary(x => x.Id, x => x.Tip);
+
+            var updated = 0;
+            foreach (var s in states)
+            {
+                var tip = tipMap.TryGetValue(s.IdPiva, out var t) ? t : "";
+
+                if (tip != "kesa")
+                {
+                    if (s.StanjeUProgramu != s.Izmereno)
+                    {
+                        s.StanjeUProgramu = s.Izmereno;
+                        updated++;
+                    }
+                }
+            }
+            Console.WriteLine($"UPDATED: {updated}");
 
             // Cuvamo kao UTC 00:00 da se ne pomeri datum zbog timezone-a
             var datumPopisaUtc = new DateTime(
@@ -410,10 +453,69 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
             _context.InventoryResets.Add(entity);
             await _context.SaveChangesAsync();
 
-            return entity.Id;
+           
+            var kesaItems = beers.Where(b => b.Tip == "kesa")
+                .Select(b => new KesaItemDto
+                {
+                    IdPiva = b.Id,
+                    NazivPiva = b.NazivPiva
+                }).ToList();
+
+            var kesaIds = kesaItems.Select(x => x.IdPiva).ToHashSet();
+
+            if(kesaIds.Count > 0)
+            {
+                if(dto.KesaPosOverrides == null || dto.KesaPosOverrides.Count == 0)
+                {
+                    throw new ArgumentException("Morate uneti POS vrednosti za KESA artikle");
+                }
+                var providedIds = new HashSet<int>();
+
+                foreach(var o in dto.KesaPosOverrides)
+                {
+                    if(o.IdPiva <= 0)
+                    {
+                        throw new ArgumentException("IdPiva za KESA nije validan.");
+                    }
+                    if(o.PosValue < 0)
+                    {
+                        throw new ArgumentException("POS vrednost za KESA ne sme biti negativna.");
+                    }
+                    providedIds.Add(o.IdPiva);
+                }
+
+                if (!kesaIds.SetEquals(providedIds))
+                {
+                    throw new ArgumentException("Morate uneti POS vrednosti za sva KESA piva tj. artikle");
+                }
+
+                foreach(var o in dto.KesaPosOverrides)
+                {
+                    if (!kesaIds.Contains(o.IdPiva))
+                        continue;
+
+                    var st = states.FirstOrDefault(s => s.IdPiva == o.IdPiva);
+                    if(st == null)
+                    {
+                        throw new ArgumentException("Nije pronađeno stanje za KESA pivo u tom nalogu.");
+                    }
+                    st.StanjeUProgramu = (float)o.PosValue;
+                }
+            }
+
+
+            await _context.SaveChangesAsync();
+
+            return new
+            {
+                id = entity.Id,
+                kesaItems
+            };
 
 
         }
+
+  
 
     }
 }
