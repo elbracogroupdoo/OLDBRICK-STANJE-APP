@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using OLDBRICK_STANJE_ARTIKALA_APP.DTOs.Beers;
 using OLDBRICK_STANJE_ARTIKALA_APP.DTOs.DailyReports;
 using OLDBRICK_STANJE_ARTIKALA_APP.DTOs.RangeReports;
 
@@ -23,6 +24,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
         Task<PotrosnjaSinceLastInventoryDto> GetTotalsSinceLastInventoryAsync(int idNaloga);
 
         Task<object> CreateInventoryDate([FromBody] CreateInventoryResetDto dto);
+        Task<List<KesaItemDto>> GetKesaitemsForDateAsync(DateOnly datum);
 
     }
 }

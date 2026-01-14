@@ -160,30 +160,14 @@ export async function getTotalsSinceLastInventoryReset(idNaloga){
     return res.data; // dto
 }
 
+export async function getKesaItemsForDate(datum){
+    const {data} = await httpClient.get("/api/dailyreports/inventory-reset/kesa-items",
+        {
+            params: {datum}
+        }
+    );
+    return data;
+}
 
 
 
-// export {
-//     getReportStatesById,
-//     createNalogByDate,
-//     putMeasuredProsuto,
-//     calculateProsutoRazlika,
-//     getNalogByDate,
-//     postDailyReportStates,
-//     getAllArticles,
-//     calculateProsutoOnly,
-//     getAllReportDates,
-//     getDailyReportJustByDate,
-//     postCalculatedProsutoForEachBeer,
-//     getByRangeTotalProsuto,
-//     getProsutoByRangeForEachBeer,
-//     addBeerQuantity,
-//     addMoreBeerQuantity,
-//     deleteDailyReport,
-//     updateDailyReportStatusAndCalculate,
-//     updateProsutoKantaAndRecalculate,
-//     getTotalPotrosnjaVagaAndPos,
-//     getDayBeforeStates,
-//     getDailyReportByDateWithBiggerOutput,
-//     createInventoryReset
-// };

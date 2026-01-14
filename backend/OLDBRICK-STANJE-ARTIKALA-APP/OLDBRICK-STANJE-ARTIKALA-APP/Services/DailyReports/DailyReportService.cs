@@ -515,6 +515,38 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
 
         }
 
+    public async Task<List<KesaItemDto>> GetKesaitemsForDateAsync(DateOnly datum)
+        {
+            var report = await _context.DailyReports.FirstOrDefaultAsync(x => x.Datum == datum);
+
+            if (report == null)
+                throw new ArgumentException("Ne postoji dnevni nalog za izabrani datum.");
+
+            var beerIds = await _context.DailyBeerStates
+                .Where(s => s.IdNaloga == report.IdNaloga)
+                .Select(s => s.IdPiva)
+                .Distinct()
+                .ToListAsync();
+            var kesaItems = await _context.Beers
+                .Where(b => beerIds.Contains(b.Id))
+                .Select(b => new
+                {
+                    b.Id,
+                    b.NazivPiva,
+                    Tip = (b.TipMerenja ?? "").Trim().ToLower()
+                 })
+                .Where(x => x.Tip == "kesa")
+                 .Select(x => new KesaItemDto
+                 {
+                     IdPiva = x.Id,
+                     NazivPiva = x.NazivPiva
+                 })
+                 .ToListAsync();
+            
+                       return kesaItems;
+
+        }
+
   
 
     }

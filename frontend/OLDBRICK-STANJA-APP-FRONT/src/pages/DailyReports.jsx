@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DailyReportPreview from "../components/DailyReportPreview";
 import Calendar from "../components/Calendar";
 import {
@@ -6,6 +6,7 @@ import {
   getNalogByDate,
   createInventoryReset,
   deleteDailyReport,
+  getKesaItemsForDate,
 } from "../api/helpers";
 import SaveDailyReportStates from "../components/SaveDailyReportStates";
 
@@ -20,6 +21,9 @@ function DailyReports() {
   const [invStatus, setInvStatus] = useState(""); // poruka u modalu
   const [showInvSuccess, setShowInvSuccess] = useState(false);
   const [calendarPatch, setCalendarPatch] = useState(null);
+  const [kesaItems, setKesaItems] = useState([]);
+  const [kesaPos, setKesaPos] = useState({});
+  const [kesaLoading, setKesaLoading] = useState(false);
 
   async function handleGetOrCreateNalog(datum) {
     try {
@@ -62,6 +66,9 @@ function DailyReports() {
     setDatum(datum);
     handleGetOrCreateNalog(datum);
   }
+  function handleKesaChange(idPiva, value) {
+    setKesaPos((prev) => ({ ...prev, [idPiva]: value }));
+  }
 
   console.log("URL", import.meta.env.VITE_API_BASE_URL);
 
@@ -86,18 +93,31 @@ function DailyReports() {
         setInvStatus("Izaberi datum popisa.");
         return;
       }
+      const isKesaValid =
+        kesaItems.length === 0 ||
+        kesaItems.every((x) => {
+          const raw = (kesaPos[x.idPiva] ?? "").toString().trim();
+          const num = Number(raw);
+          return raw !== "" && Number.isFinite(num) && num >= 0;
+        });
+
+      if (!isKesaValid) {
+        setInvStatus("Moraš uneti POS vrednosti za sva KESA piva.");
+        return;
+      }
 
       const payload = {
         datumPopisa: invDate,
         napomena: (invNote || "").trim(),
+        kesaPosOverrides: kesaItems.map((x) => ({
+          idPiva: x.idPiva,
+          posValue: Number((kesaPos[x.idPiva] ?? "").toString().trim()),
+        })),
       };
 
       await createInventoryReset(payload);
 
-      // zatvori formu
       setIsInvOpen(false);
-
-      // prikazi success popup
       setShowInvSuccess(true);
     } catch (e) {
       console.error(e);
@@ -106,6 +126,28 @@ function DailyReports() {
       setInvLoading(false);
     }
   }
+  useEffect(() => {
+    if (!isInvOpen) return;
+    if (!invDate) return;
+
+    setKesaLoading(true);
+    getKesaItemsForDate(invDate)
+      .then((items) => {
+        setKesaItems(items);
+
+        // init input state
+        const init = {};
+        items.forEach((x) => (init[x.idPiva] = ""));
+        setKesaPos(init);
+      })
+      .catch((e) => {
+        console.error(e);
+        setInvStatus("Ne mogu da učitam KESA piva za izabrani datum.");
+        setKesaItems([]);
+        setKesaPos({});
+      })
+      .finally(() => setKesaLoading(false));
+  }, [isInvOpen, invDate]);
 
   return (
     <div className="pt-20 px-4 relative">
@@ -194,6 +236,37 @@ function DailyReports() {
                   className="h-12 w-full rounded-lg bg-white/10 px-4 text-white text-base placeholder:text-white/40"
                 />
               </div>
+              {kesaItems.length > 0 && (
+                <div className="rounded-lg border border-white/10 p-4">
+                  <div className="text-white font-semibold mb-3">
+                    KESA (obavezno)
+                  </div>
+
+                  {kesaLoading ? (
+                    <div className="text-white/60 text-sm">Učitavam…</div>
+                  ) : (
+                    <div className="space-y-3">
+                      {kesaItems.map((x) => (
+                        <div key={x.idPiva} className="flex items-center gap-3">
+                          <div className="w-28 text-white/80">
+                            {x.nazivPiva}
+                          </div>
+
+                          <input
+                            type="number"
+                            placeholder="POS"
+                            value={kesaPos[x.idPiva] ?? ""}
+                            onChange={(e) =>
+                              handleKesaChange(x.idPiva, e.target.value)
+                            }
+                            className="h-12 w-full rounded-lg bg-white/10 px-4 text-white"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {invStatus && (
                 <div

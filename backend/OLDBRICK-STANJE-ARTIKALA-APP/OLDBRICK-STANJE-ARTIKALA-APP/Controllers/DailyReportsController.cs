@@ -274,6 +274,19 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
                 return BadRequest(ex.Message);
             }
         }
+        [HttpGet("inventory-reset/kesa-items")]
+        public async Task<IActionResult> GetKesaItems([FromQuery] DateOnly datum)
+        {
+            try
+            {
+                var items = await _dailyReport.GetKesaitemsForDateAsync(datum);
+                return Ok(items);
+            }
+            catch(ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
 
     }
 
