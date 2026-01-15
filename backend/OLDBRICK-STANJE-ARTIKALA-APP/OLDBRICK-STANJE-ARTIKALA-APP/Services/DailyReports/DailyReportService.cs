@@ -49,6 +49,35 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
             _context.DailyReports.Add(dailyReport);
             await _context.SaveChangesAsync();
 
+            var hasStates = await _context.DailyBeerStates.AnyAsync(s => s.IdNaloga == dailyReport.IdNaloga);
+
+            if (!hasStates)
+            {
+                var lastReset = await _context.InventoryResets.Where(r => DateOnly.FromDateTime(r.DatumPopisa.Date) < datum)
+                    .OrderByDescending(r => r.DatumPopisa).FirstOrDefaultAsync();
+
+                if(lastReset != null)
+                {
+                    var items = await _context.InventoryResetItems
+                                    .Where(i => i.InventoryResetId == lastReset.Id)
+                                    .ToListAsync();
+                    
+                    if(items.Count > 0)
+                    {
+                        var newStates = items.Select(i => new DailyBeerState
+                        {
+                            IdNaloga = dailyReport.IdNaloga,
+                            IdPiva = i.IdPiva,
+                            NazivPiva = i.NazivPiva,
+                            Izmereno = i.IzmerenoSnapshot,
+                            StanjeUProgramu = i.PosSnapshot
+                        }).ToList();
+                        _context.DailyBeerStates.AddRange(newStates);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
             return new DailyReportResponseDto
             {
                 IdNaloga = dailyReport.IdNaloga,
@@ -265,41 +294,79 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
         public async Task<List<DayBeforeStateDto>> GetDayBeforeStates(int idNaloga)
         {
             var report = await _context.DailyReports
+                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.IdNaloga == idNaloga);
+
             if (report == null)
-            {
                 throw new ArgumentException("Dnevni nalog ne postoji");
-            }
 
             var dayBeforeReport = await _context.DailyReports
+                .AsNoTracking()
                 .Where(r => r.Datum < report.Datum)
                 .OrderByDescending(r => r.Datum)
                 .FirstOrDefaultAsync();
 
             if (dayBeforeReport == null)
-            {
                 return new List<DayBeforeStateDto>();
+
+            var prevDate = dayBeforeReport.Datum; // DateOnly
+
+            // Provera: da li je BIO POPIS na taj prethodni datum?
+            // DatumPopisa je timestamptz => pravimo UTC range za ceo dan
+            var prevStartUtc = new DateTime(prevDate.Year, prevDate.Month, prevDate.Day, 0, 0, 0, DateTimeKind.Utc);
+            var prevEndUtc = new DateTime(prevDate.Year, prevDate.Month, prevDate.Day, 23, 59, 59, 999, DateTimeKind.Utc);
+
+            var restartThatDay = await _context.InventoryResets
+                .AsNoTracking()
+                .Where(x => x.DatumPopisa >= prevStartUtc && x.DatumPopisa <= prevEndUtc)
+                .OrderByDescending(x => x.DatumPopisa)
+                .ThenByDescending(x => x.Id)
+                .FirstOrDefaultAsync();
+
+            // Ako je prethodni dan bio POPIS, vracamo snapshot iz inventory_reset_items
+            if (restartThatDay != null)
+            {
+                var snapshot = await _context.InventoryResetItems
+                    .AsNoTracking()
+                    .Where(i => i.InventoryResetId == restartThatDay.Id)
+                    .Join(_context.Beers,
+                        i => i.IdPiva,
+                        b => b.Id,
+                        (i, b) => new DayBeforeStateDto
+                        {
+                            IdPiva = i.IdPiva,
+                            NazivPiva = b.NazivPiva,
+                            TipMerenja = b.TipMerenja,
+                            PrevVaga = Convert.ToSingle(i.IzmerenoSnapshot),
+                            PrevPos = Convert.ToSingle(i.PosSnapshot)
+                        })
+                    .ToListAsync();
+
+                return snapshot;
             }
 
+            // Inace: klasika TAB3 za prethodni nalog
             var prevIdNaloga = dayBeforeReport.IdNaloga;
 
             var result = await _context.DailyBeerStates
+                .AsNoTracking()
                 .Where(s => s.IdNaloga == prevIdNaloga)
                 .Join(_context.Beers,
-            s => s.IdPiva,
-            b => b.Id,
-            (s, b) => new DayBeforeStateDto
-            {
-                IdPiva = s.IdPiva,
-                NazivPiva = b.NazivPiva,
-                TipMerenja = b.TipMerenja,
-                PrevVaga = s.Izmereno,
-                PrevPos = s.StanjeUProgramu
-            })
+                    s => s.IdPiva,
+                    b => b.Id,
+                    (s, b) => new DayBeforeStateDto
+                    {
+                        IdPiva = s.IdPiva,
+                        NazivPiva = b.NazivPiva,
+                        TipMerenja = b.TipMerenja,
+                        PrevVaga = s.Izmereno,
+                        PrevPos = s.StanjeUProgramu
+                    })
                 .ToListAsync();
 
             return result;
         }
+
 
         public async Task<PotrosnjaSinceLastInventoryDto> GetTotalsSinceLastInventoryAsync(int idNaloga)
         {
@@ -387,54 +454,83 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
             if (dto == null) throw new ArgumentException("Body je prazan.");
             if (dto.DatumPopisa == default) throw new ArgumentException("DatumPopisa nije validan.");
 
+            // 1) Provera da popis za taj datum vec ne postoji
             var exists = await _context.InventoryResets
                 .AnyAsync(x => DateOnly.FromDateTime(x.DatumPopisa.Date) == dto.DatumPopisa);
 
             if (exists) throw new ArgumentException("Popis za taj datum već postoji.");
 
+            // 2) Nadji dnevni nalog (TAB2) za datum popisa
             var report = await _context.DailyReports
                 .FirstOrDefaultAsync(x => x.Datum == dto.DatumPopisa);
+
             if (report == null)
-            {
                 throw new ArgumentException("Ne postoji dnevni nalog za izabrani datum");
 
-
-            }
-
-            var states = await _context.DailyBeerStates.Where(s => s.IdNaloga == report.IdNaloga).ToListAsync();
+            // 3) Ucitaj stanja (TAB3) za taj nalog (popis dan)
+            var states = await _context.DailyBeerStates
+                .Where(s => s.IdNaloga == report.IdNaloga)
+                .ToListAsync();
 
             if (states.Count == 0)
                 throw new ArgumentException("Nema unetih stanja za taj nalog.");
 
+            // 4) Ucitaj piva i tip merenja (normalizacija posle query)
             var beerIds = states.Select(s => s.IdPiva).Distinct().ToList();
 
-            var beers = await _context.Beers.Where(b => beerIds.Contains(b.Id))
-                .Select(b => new
-                {
-                    b.Id,
-                    b.NazivPiva,
-                    Tip = (b.TipMerenja ?? "").Trim().ToLowerInvariant()
-                }).ToListAsync();
+            var beersRaw = await _context.Beers
+                .Where(b => beerIds.Contains(b.Id))
+                .Select(b => new { b.Id, b.NazivPiva, b.TipMerenja })
+                .ToListAsync();
+
+            var beers = beersRaw.Select(b => new
+            {
+                b.Id,
+                b.NazivPiva,
+                Tip = ((b.TipMerenja ?? "").Trim().ToLower()) // <-- posle query, bez ToLowerInvariant u SQL-u
+            }).ToList();
+
+            var nazivMap = beers.ToDictionary(x => x.Id, x => x.NazivPiva);
 
             var tipMap = beers.ToDictionary(x => x.Id, x => x.Tip);
 
-            var updated = 0;
-            foreach (var s in states)
-            {
-                var tip = tipMap.TryGetValue(s.IdPiva, out var t) ? t : "";
-
-                if (tip != "kesa")
+            // 5) KESA items (kao do sad)
+            var kesaItems = beers
+                .Where(b => b.Tip == "kesa")
+                .Select(b => new KesaItemDto
                 {
-                    if (s.StanjeUProgramu != s.Izmereno)
-                    {
-                        s.StanjeUProgramu = s.Izmereno;
-                        updated++;
-                    }
-                }
-            }
-            Console.WriteLine($"UPDATED: {updated}");
+                    IdPiva = b.Id,
+                    NazivPiva = b.NazivPiva
+                })
+                .ToList();
 
-            // Cuvamo kao UTC 00:00 da se ne pomeri datum zbog timezone-a
+            var kesaIds = kesaItems.Select(x => x.IdPiva).ToHashSet();
+
+            // 6) Ako ima KESA artikala, validiraj overrides (ali NE menjaj states za datum popisa)
+            Dictionary<int, float> kesaOverrideMap = new();
+
+            if (kesaIds.Count > 0)
+            {
+                if (dto.KesaPosOverrides == null || dto.KesaPosOverrides.Count == 0)
+                    throw new ArgumentException("Morate uneti POS vrednosti za KESA artikle");
+
+                var providedIds = new HashSet<int>();
+
+                foreach (var o in dto.KesaPosOverrides)
+                {
+                    if (o.IdPiva <= 0) throw new ArgumentException("IdPiva za KESA nije validan.");
+                    if (o.PosValue < 0) throw new ArgumentException("POS vrednost za KESA ne sme biti negativna.");
+
+                    providedIds.Add(o.IdPiva);
+                }
+
+                if (!kesaIds.SetEquals(providedIds))
+                    throw new ArgumentException("Morate uneti POS vrednosti za sva KESA piva tj. artikle");
+
+                kesaOverrideMap = dto.KesaPosOverrides.ToDictionary(x => x.IdPiva, x => x.PosValue);
+            }
+
+            // 7) Snimi INVENTORY RESET zapis (kao do sad)
             var datumPopisaUtc = new DateTime(
                 dto.DatumPopisa.Year,
                 dto.DatumPopisa.Month,
@@ -453,57 +549,42 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
             _context.InventoryResets.Add(entity);
             await _context.SaveChangesAsync();
 
-           
-            var kesaItems = beers.Where(b => b.Tip == "kesa")
-                .Select(b => new KesaItemDto
-                {
-                    IdPiva = b.Id,
-                    NazivPiva = b.NazivPiva
-                }).ToList();
+            var resetItems = new List<InventoryResetItem>();
 
-            var kesaIds = kesaItems.Select(x => x.IdPiva).ToHashSet();
-
-            if(kesaIds.Count > 0)
+            foreach(var s in states)
             {
-                if(dto.KesaPosOverrides == null || dto.KesaPosOverrides.Count == 0)
-                {
-                    throw new ArgumentException("Morate uneti POS vrednosti za KESA artikle");
-                }
-                var providedIds = new HashSet<int>();
+                var tip = tipMap.TryGetValue(s.IdPiva, out var t) ? t : "";
+                var naziv = nazivMap.TryGetValue(s.IdPiva, out var n) ? n : null;
 
-                foreach(var o in dto.KesaPosOverrides)
+                var izmerenoSnapshot = s.Izmereno;
+                float posSnapshot;
+
+                if(tip == "kesa")
                 {
-                    if(o.IdPiva <= 0)
+                    if(!kesaOverrideMap.TryGetValue(s.IdPiva, out var posVal))
                     {
-                        throw new ArgumentException("IdPiva za KESA nije validan.");
-                    }
-                    if(o.PosValue < 0)
-                    {
-                        throw new ArgumentException("POS vrednost za KESA ne sme biti negativna.");
-                    }
-                    providedIds.Add(o.IdPiva);
-                }
+                        throw new ArgumentException("Morate uneti POS vrednost za sva piva koja se mere iz kese.");
 
-                if (!kesaIds.SetEquals(providedIds))
+                        
+                    }
+                    posSnapshot = posVal;
+                }
+                else
                 {
-                    throw new ArgumentException("Morate uneti POS vrednosti za sva KESA piva tj. artikle");
+                    posSnapshot = izmerenoSnapshot;
                 }
 
-                foreach(var o in dto.KesaPosOverrides)
+                resetItems.Add(new InventoryResetItem
                 {
-                    if (!kesaIds.Contains(o.IdPiva))
-                        continue;
-
-                    var st = states.FirstOrDefault(s => s.IdPiva == o.IdPiva);
-                    if(st == null)
-                    {
-                        throw new ArgumentException("Nije pronađeno stanje za KESA pivo u tom nalogu.");
-                    }
-                    st.StanjeUProgramu = (float)o.PosValue;
-                }
+                    InventoryResetId = entity.Id,
+                    IdPiva = s.IdPiva,
+                    NazivPiva = naziv,
+                    IzmerenoSnapshot = izmerenoSnapshot,
+                    PosSnapshot = posSnapshot
+                });
             }
 
-
+            _context.InventoryResetItems.AddRange(resetItems);
             await _context.SaveChangesAsync();
 
             return new
@@ -511,11 +592,10 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 id = entity.Id,
                 kesaItems
             };
-
-
         }
 
-    public async Task<List<KesaItemDto>> GetKesaitemsForDateAsync(DateOnly datum)
+
+        public async Task<List<KesaItemDto>> GetKesaitemsForDateAsync(DateOnly datum)
         {
             var report = await _context.DailyReports.FirstOrDefaultAsync(x => x.Datum == datum);
 

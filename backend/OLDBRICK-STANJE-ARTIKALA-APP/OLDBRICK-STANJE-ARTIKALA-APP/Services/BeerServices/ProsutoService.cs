@@ -17,6 +17,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
 
         public async Task<ProsutoResultDto> CalculateAndSaveAsync(int idNaloga)
         {
+            Console.WriteLine("[OB_DEBUG] CalculateAndSaveAsync HIT");
             // 1) Ucitaj nalog (TAB2)
             var report = await _context.DailyReports
                 .FirstOrDefaultAsync(x => x.IdNaloga == idNaloga);
@@ -43,23 +44,70 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
             var CountType = await _context.Beers.Where(b => beerIds.Contains(b.Id)).ToDictionaryAsync(b => b.Id, b => b.TipMerenja);
 
 
+            var lastReset = await _context.InventoryResets
+                            .Where(r => DateOnly.FromDateTime(r.DatumPopisa.Date) < report.Datum)
+                            .OrderByDescending(r => r.DatumPopisa)
+                            .FirstOrDefaultAsync();
+
+            DateOnly? resetDate = lastReset != null
+                                    ? DateOnly.FromDateTime(lastReset.DatumPopisa.Date)
+                                    : null;
+
+            Dictionary<int, (float izmereno, float pos)> resetMap = new();
+
+            if (lastReset != null)
+            {
+                resetMap = await _context.InventoryResetItems
+                    .Where(i => i.InventoryResetId == lastReset.Id)
+                    .ToDictionaryAsync(i => i.IdPiva, i => (i.IzmerenoSnapshot, i.PosSnapshot));
+            }
+
             float sumNeg = 0;
             float sumPos = 0;
 
             foreach (var s in states)
             {
-                var prev = await _context.DailyBeerStates
-                    .Join(_context.DailyReports,
-                        st => st.IdNaloga,
-                        dr => dr.IdNaloga,
-                        (st, dr) => new { st, dr })
-                    .Where(x => x.st.IdPiva == s.IdPiva && x.dr.Datum < report.Datum)
+                var prevQuery = _context.DailyBeerStates
+                            .Join(_context.DailyReports,
+                                st => st.IdNaloga,
+                                dr => dr.IdNaloga,
+                                (st, dr) => new { st, dr })
+                            .Where(x => x.st.IdPiva == s.IdPiva && x.dr.Datum < report.Datum);
+
+                if (resetDate != null)
+                {
+                    prevQuery = prevQuery.Where(x => x.dr.Datum > resetDate.Value);
+                }
+
+                var prev = await prevQuery
                     .OrderByDescending(x => x.dr.Datum)
                     .Select(x => x.st)
                     .FirstOrDefaultAsync();
 
-                var startVaga = prev?.Izmereno ?? s.Izmereno;
-                var startPos = prev?.StanjeUProgramu ?? s.StanjeUProgramu;
+                Console.WriteLine("===== CALC DEBUG START =====");
+                Console.WriteLine($"[OB_DEBUG] Pivo {s.IdPiva}: prev={(prev != null ? "YES" : "NO")}," +
+                    $" reset={(resetMap.ContainsKey(s.IdPiva) ? "YES" : "NO")}");
+
+                Console.WriteLine("===== CALC DEBUG END =====");
+
+                float startVaga;
+                float startPos;
+
+                if (prev != null)
+                {
+                    startVaga = prev.Izmereno;
+                    startPos = prev.StanjeUProgramu;
+                }
+                else if (resetMap.TryGetValue(s.IdPiva, out var snap))
+                {
+                    startVaga = snap.izmereno;
+                    startPos = snap.pos;
+                }
+                else
+                {
+                    startVaga = s.Izmereno;
+                    startPos = s.StanjeUProgramu;
+                }
 
                 var endVaga = s.Izmereno;
                 var endPos = s.StanjeUProgramu;
@@ -69,12 +117,13 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 float vagaPotrosnja;
                 float posPotrosnja;
 
-                if (tipMerenja == "Bure" || tipMerenja == "Kafa")
+                if (tipMerenja.Equals("Bure", StringComparison.OrdinalIgnoreCase) ||
+                    tipMerenja.Equals("Kafa", StringComparison.OrdinalIgnoreCase))
                 {
                     vagaPotrosnja = startVaga - endVaga;
                     posPotrosnja = startPos - endPos;
                 }
-                else if (tipMerenja == "Kesa")
+                else if (tipMerenja.Equals("Kesa", StringComparison.OrdinalIgnoreCase))
                 {
                     vagaPotrosnja = endVaga - startVaga;
                     posPotrosnja = startPos - endPos;
@@ -173,43 +222,95 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
 
         public async Task<ProsutoResultDto> GetAllStatesByIdNaloga(int idNaloga)
         {
+            var report = await _context.DailyReports
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.IdNaloga == idNaloga);
+
+            if (report == null)
+                throw new ArgumentException("Dnevni nalog ne postoji.");
+
+            var reportDate = report.Datum; // DateOnly
+
+            // Pocetak dana (UTC) => popis mora biti PRE ovog trenutka da bi vazilo kao baseline
+            var reportStartUtc = new DateTime(
+                reportDate.Year, reportDate.Month, reportDate.Day,
+                0, 0, 0, DateTimeKind.Utc
+            );
+
             var currentStates = await _context.DailyBeerStates
                 .Where(s => s.IdNaloga == idNaloga)
                 .ToListAsync();
 
-            var prevReport = await _context.DailyReports
-                .Where(r => r.IdNaloga < idNaloga)
-                .OrderByDescending(r => r.IdNaloga)
-                .FirstOrDefaultAsync();
-
-            var prevStates = prevReport == null
-                ? new List<DailyBeerState>()
-                : await _context.DailyBeerStates
-                    .Where(s => s.IdNaloga == prevReport.IdNaloga)
-                    .ToListAsync();
-
-            //  tip merenja mapa
             var beerIds = currentStates.Select(x => x.IdPiva).Distinct().ToList();
             var tipByBeerId = await _context.Beers
                 .Where(b => beerIds.Contains(b.Id))
                 .ToDictionaryAsync(b => b.Id, b => b.TipMerenja);
 
-            var items = new List<BeerCalcResultDto>();
-
-            var restockArticles = await _context.Restocks.Where(r => r.IdNaloga == idNaloga)
+            var restockArticles = await _context.Restocks
+                .Where(r => r.IdNaloga == idNaloga)
                 .GroupBy(r => r.IdPiva)
-                .Select(g => new { IdPiva = g.Key, Total = g.Sum(x => x.Quantity)})
+                .Select(g => new { IdPiva = g.Key, Total = g.Sum(x => x.Quantity) })
                 .ToDictionaryAsync(x => x.IdPiva, x => x.Total);
+
+            // KLJUCNA PROMENA:
+            // Popis vazi kao baseline samo ako je bio PRE tog dana (ne na isti dan).
+            var lastRestart = await _context.InventoryResets
+                .AsNoTracking()
+                .Where(x => x.DatumPopisa < reportStartUtc)
+                .OrderByDescending(x => x.DatumPopisa)
+                .ThenByDescending(x => x.Id)
+                .FirstOrDefaultAsync();
+
+            Dictionary<int, (float VagaStart, float PosStart)> resetMap = new();
+
+            if (lastRestart != null)
+            {
+                resetMap = await _context.InventoryResetItems
+                    .AsNoTracking()
+                    .Where(x => x.InventoryResetId == lastRestart.Id)
+                    .GroupBy(x => x.IdPiva)
+                    .Select(g => new
+                    {
+                        IdPiva = g.Key,
+                        Vaga = g.OrderByDescending(i => i.Id).Select(i => i.IzmerenoSnapshot).FirstOrDefault(),
+                        Pos = g.OrderByDescending(i => i.Id).Select(i => i.PosSnapshot).FirstOrDefault()
+                    })
+                    .ToDictionaryAsync(
+                        x => x.IdPiva,
+                        x => (Convert.ToSingle(x.Vaga), Convert.ToSingle(x.Pos))
+                    );
+            }
+
+            var items = new List<BeerCalcResultDto>();
 
             foreach (var current in currentStates)
             {
                 restockArticles.TryGetValue(current.IdPiva, out var addedDec);
-                var added = (float)addedDec;
+                var added = Convert.ToSingle(addedDec);
 
-                var prev = prevStates.FirstOrDefault(p => p.IdPiva == current.IdPiva);
+                float vagaStart;
+                float posStart;
 
-                float vagaStart = prev?.Izmereno ?? current.Izmereno;
-                float posStart = prev?.StanjeUProgramu ?? current.StanjeUProgramu;
+                if (resetMap.TryGetValue(current.IdPiva, out var snap))
+                {
+                    vagaStart = snap.VagaStart;
+                    posStart = snap.PosStart;
+                }
+                else
+                {
+                    var prev = await _context.DailyBeerStates
+                        .Join(_context.DailyReports,
+                            st => st.IdNaloga,
+                            dr => dr.IdNaloga,
+                            (st, dr) => new { st, dr })
+                        .Where(x => x.st.IdPiva == current.IdPiva && x.dr.Datum < reportDate)
+                        .OrderByDescending(x => x.dr.Datum)
+                        .Select(x => x.st)
+                        .FirstOrDefaultAsync();
+
+                    vagaStart = prev?.Izmereno ?? current.Izmereno;
+                    posStart = prev?.StanjeUProgramu ?? current.StanjeUProgramu;
+                }
 
                 float vagaEnd = current.Izmereno;
                 float posEnd = current.StanjeUProgramu;
@@ -217,17 +318,11 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 if (!tipByBeerId.TryGetValue(current.IdPiva, out var tipRaw))
                     throw new ArgumentException($"Pivo sa ID {current.IdPiva} ne postoji u TAB1.");
 
-                var tip = tipRaw?.Trim().ToLowerInvariant();
+                var tip = (tipRaw ?? "").Trim().ToLower();
 
                 float vagaPotrosnja;
                 float posPotrosnja;
-                // NAPOMENA:
-                // - kod "bure": Izmereno predstavlja kolicinu koja OPADA (vaga)
-                // - kod "kesa": Izmereno predstavlja BROJAC (kumulativno raste)
-                //   zato se SAMO za kesa obrce proracun vagaPotrosnje,
-                //   dok POS logika (startPos - endPos) ostaje ista
-                // koristim vrednost za svako pivo a to je tipMerenja i na osnovu toga znam 
-                // koja logika gde ide za proracun!
+
                 if (tip == "bure" || tip == "kafa")
                 {
                     vagaPotrosnja = (vagaStart + added) - vagaEnd;
@@ -235,9 +330,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 }
                 else if (tip == "kesa")
                 {
-                    
                     vagaPotrosnja = vagaEnd - vagaStart;
-                    
                     posPotrosnja = (posStart + added) - posEnd;
                 }
                 else
@@ -265,20 +358,17 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 });
             }
 
-            var report = await _context.DailyReports.AsNoTracking()
-                .FirstOrDefaultAsync(r => r.IdNaloga == idNaloga);
-
-            var TotalProsuto = report?.TotalProsuto ?? 0;
-            var ProsutoKanta = report?.IzmerenoProsuto ?? 0;
-
             return new ProsutoResultDto
             {
                 IdNaloga = idNaloga,
-                TotalProsuto = TotalProsuto,
-                Items = items,
-                ProsutoKanta = ProsutoKanta
+                TotalProsuto = report.TotalProsuto ,
+                ProsutoKanta = report.IzmerenoProsuto ,
+                Items = items
             };
         }
+
+
+
 
         public async Task<float> CalculateAndSaveProsutoRazlikaAsync(int idNaloga)
         {
