@@ -226,7 +226,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                     {
                         IdNaloga = idNaloga,
                         IdPiva = idPiva,
-                        Quantity = (decimal)add
+                        Quantity = (float)add
                     });
                 }
 

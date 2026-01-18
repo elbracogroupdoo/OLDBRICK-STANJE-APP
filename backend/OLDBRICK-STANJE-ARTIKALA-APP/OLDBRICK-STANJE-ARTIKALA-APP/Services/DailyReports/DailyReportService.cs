@@ -49,34 +49,34 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
             _context.DailyReports.Add(dailyReport);
             await _context.SaveChangesAsync();
 
-            var hasStates = await _context.DailyBeerStates.AnyAsync(s => s.IdNaloga == dailyReport.IdNaloga);
+            //var hasStates = await _context.DailyBeerStates.AnyAsync(s => s.IdNaloga == dailyReport.IdNaloga);
 
-            if (!hasStates)
-            {
-                var lastReset = await _context.InventoryResets.Where(r => DateOnly.FromDateTime(r.DatumPopisa.Date) < datum)
-                    .OrderByDescending(r => r.DatumPopisa).FirstOrDefaultAsync();
+            //if (!hasStates)
+            //{
+            //    var lastReset = await _context.InventoryResets.Where(r => DateOnly.FromDateTime(r.DatumPopisa.Date) < datum)
+            //        .OrderByDescending(r => r.DatumPopisa).FirstOrDefaultAsync();
 
-                if(lastReset != null)
-                {
-                    var items = await _context.InventoryResetItems
-                                    .Where(i => i.InventoryResetId == lastReset.Id)
-                                    .ToListAsync();
+            //    if(lastReset != null)
+            //    {
+            //        var items = await _context.InventoryResetItems
+            //                        .Where(i => i.InventoryResetId == lastReset.Id)
+            //                        .ToListAsync();
                     
-                    if(items.Count > 0)
-                    {
-                        var newStates = items.Select(i => new DailyBeerState
-                        {
-                            IdNaloga = dailyReport.IdNaloga,
-                            IdPiva = i.IdPiva,
-                            NazivPiva = i.NazivPiva,
-                            Izmereno = i.IzmerenoSnapshot,
-                            StanjeUProgramu = i.PosSnapshot
-                        }).ToList();
-                        _context.DailyBeerStates.AddRange(newStates);
-                        await _context.SaveChangesAsync();
-                    }
-                }
-            }
+            //        if(items.Count > 0)
+            //        {
+            //            var newStates = items.Select(i => new DailyBeerState
+            //            {
+            //                IdNaloga = dailyReport.IdNaloga,
+            //                IdPiva = i.IdPiva,
+            //                NazivPiva = i.NazivPiva,
+            //                Izmereno = i.IzmerenoSnapshot,
+            //                StanjeUProgramu = i.PosSnapshot
+            //            }).ToList();
+            //            _context.DailyBeerStates.AddRange(newStates);
+            //            await _context.SaveChangesAsync();
+            //        }
+            //    }
+            //}
 
             return new DailyReportResponseDto
             {

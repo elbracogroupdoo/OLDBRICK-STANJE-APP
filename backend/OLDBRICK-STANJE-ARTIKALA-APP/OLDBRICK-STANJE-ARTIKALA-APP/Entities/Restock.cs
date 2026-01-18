@@ -8,7 +8,7 @@
 
         public int IdPiva { get; set; }
 
-        public decimal Quantity { get; set; }
+        public float Quantity { get; set; }
 
         public DateTime CreatedAt { get; set; }
     }

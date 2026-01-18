@@ -309,9 +309,14 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
 
             // KLJUCNA PROMENA:
             // Popis vazi kao baseline samo ako je bio PRE tog dana (ne na isti dan).
+            var yesterday = reportDate.AddDays(-1);
+
+            var yStartUtc = new DateTime(yesterday.Year, yesterday.Month, yesterday.Day, 0, 0, 0, DateTimeKind.Utc);
+            var yEndUtc = yStartUtc.AddDays(1);
+
             var lastRestart = await _context.InventoryResets
                 .AsNoTracking()
-                .Where(x => x.DatumPopisa < reportStartUtc)
+                .Where(x => x.DatumPopisa >= yStartUtc && x.DatumPopisa < yEndUtc)
                 .OrderByDescending(x => x.DatumPopisa)
                 .ThenByDescending(x => x.Id)
                 .FirstOrDefaultAsync();
@@ -613,11 +618,15 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
             // NEW 2) Poslednji popis PRE ovog dana kao baseline
             // =========================
             var reportDate = report.Datum; // DateOnly
-            var reportStartUtc = new DateTime(reportDate.Year, reportDate.Month, reportDate.Day, 0, 0, 0, DateTimeKind.Utc);
+
+            var yesterday = reportDate.AddDays(-1);
+
+            var yStartUtc = new DateTime(yesterday.Year, yesterday.Month, yesterday.Day, 0, 0, 0, DateTimeKind.Utc);
+            var yEndUtc = yStartUtc.AddDays(1);
 
             var lastRestart = await _context.InventoryResets
                 .AsNoTracking()
-                .Where(x => x.DatumPopisa < reportStartUtc)
+                .Where(x => x.DatumPopisa >= yStartUtc && x.DatumPopisa < yEndUtc)
                 .OrderByDescending(x => x.DatumPopisa)
                 .ThenByDescending(x => x.Id)
                 .FirstOrDefaultAsync();

@@ -2,6 +2,6 @@
 {
     public class AddMoreBeerQuantityBatchDto
     {
-        public List<AddMoreBeerQuantityBatchDto> Items { get; set; }
+        public List<AddMoreBeerQuantityBatchDto>? Items { get; set; }
     }
 }
