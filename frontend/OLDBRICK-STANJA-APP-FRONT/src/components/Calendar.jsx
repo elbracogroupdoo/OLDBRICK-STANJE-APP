@@ -1,6 +1,6 @@
 import { getAllReportDates, getInventoryResetDates } from "../api/helpers";
 import { useMemo, useState, useEffect } from "react";
-import { ClipboardCheck } from "lucide-react";
+import { ClipboardCheck, Check } from "lucide-react";
 
 function pad2(n) {
   return String(n).padStart(2, "0");
@@ -232,7 +232,8 @@ function Calendar({ value, onChange, label = "Datum", calendarPatch }) {
                 disabled={isEmpty}
                 onClick={() => iso && onChange(iso)}
                 className={[
-                  "relative aspect-square rounded-xl text-base sm:text-lg transition",
+                  "relative w-full h-12 sm:h-14 rounded-xl text-base sm:text-lg transition",
+
                   isEmpty
                     ? "opacity-0 cursor-default"
                     : "hover:bg-white/15 text-white/90",
@@ -253,9 +254,10 @@ function Calendar({ value, onChange, label = "Datum", calendarPatch }) {
                 </span>
 
                 {isMarked && !isSelected && (
-                  <span className="absolute bottom-1 right-1 text-[10px] leading-none text-emerald-300">
-                    ✔
-                  </span>
+                  <Check
+                    size={12}
+                    className="absolute bottom-1 right-1 text-emerald-200 bg-emerald-500/20 rounded-full p-[1px]"
+                  />
                 )}
                 {isInventoryReset && !isSelected && (
                   <ClipboardCheck
