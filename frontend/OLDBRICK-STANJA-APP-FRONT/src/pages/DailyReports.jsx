@@ -25,6 +25,16 @@ function DailyReports() {
   const [kesaPos, setKesaPos] = useState({});
   const [kesaLoading, setKesaLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [pending, setPending] = useState(0);
+
+  const begin = () => setPending((p) => p + 1);
+  const end = () => setPending((p) => Math.max(0, p - 1));
+
+  const isGlobalLoading = pending > 0;
+
+  useEffect(() => {
+    console.log("refreshKey changed:", refreshKey);
+  }, [refreshKey]);
 
   async function handleGetOrCreateNalog(datum) {
     try {
@@ -187,14 +197,20 @@ function DailyReports() {
           idNaloga={idNaloga}
           onDelete={handleDeleteNalog}
           onSaved={() => setRefreshKey((k) => k + 1)}
+          onBusyStart={begin}
+          onBusyEnd={end}
         />
       </div>
 
-      <DailyReportPreview
-        datum={datum}
-        onidNalogaResolved={setIdNaloga}
-        refreshKey={refreshKey}
-      />
+      <div className="mt-6 min-h-45">
+        <DailyReportPreview
+          datum={datum}
+          idNaloga={idNaloga}
+          refreshKey={refreshKey}
+          onBusyStart={begin}
+          onBusyEnd={end}
+        />
+      </div>
 
       {/*ONCLICK SE POJAVI */}
 
@@ -330,6 +346,7 @@ function DailyReports() {
           </div>
         </div>
       )}
+      {/* <LoadingOverlay show={isGlobalLoading} text="Učitavam..." /> */}
     </div>
   );
 }

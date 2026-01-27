@@ -205,10 +205,13 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved }) {
         setItems(result.items);
       }
 
-      setMsg("Izmenjeno i preračunato");
-      setShowModal(false);
       await saveDailyBeerShortage(idNaloga);
       await getBeerShortageTotalsForNalog(idNaloga);
+
+      onSaved?.();
+
+      setMsg("Izmenjeno i preračunato");
+      setShowModal(false);
     } catch (e) {
       console.error(e);
       setMsg("Greška pri izmeni");

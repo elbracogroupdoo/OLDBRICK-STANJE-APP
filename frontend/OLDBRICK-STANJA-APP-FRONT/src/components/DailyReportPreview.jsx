@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   getReportStatesById,
-  getNalogByDate,
   getTotalPotrosnjaVagaAndPos,
   getDailyReportByDateWithBiggerOutput,
   getTotalsSinceLastInventoryReset,
@@ -35,6 +34,16 @@ function DailyReportPreview({ datum, refreshKey, onidNalogaResolved }) {
       })
       .catch(console.error);
   }, [datum]);
+  useEffect(() => {
+    if (!idNaloga) return;
+
+    setLoading(true);
+    setData(null);
+    setTotals(null);
+    setSinceLastInventory(null);
+    setShortagePerBeer([]);
+    setShowDetails(false);
+  }, [idNaloga]);
 
   useEffect(() => {
     if (!idNaloga) return;
