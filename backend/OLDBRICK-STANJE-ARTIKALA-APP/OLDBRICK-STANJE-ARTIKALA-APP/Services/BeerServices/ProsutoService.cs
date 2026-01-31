@@ -32,7 +32,15 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 .ToListAsync();
 
             if (states.Count == 0)
-                throw new ArgumentException("Nema unetih stavki za ovaj nalog.");
+            {
+                // Nema unetih stavki -> nema sta da se racuna, preskoci bez pucanja
+                return new ProsutoResultDto
+                {
+                    IdNaloga = idNaloga,
+                    TotalProsuto = 0
+                    // Items ostaje prazno (podrazumevano)
+                };
+            }
 
             var result = new ProsutoResultDto { IdNaloga = idNaloga };
 
@@ -462,7 +470,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
             {
                 throw new ArgumentException("Dnevni nalog ne postoji.");
             }
-            if(report.IzmerenoProsuto <= 0)
+            if(report.IzmerenoProsuto < 0)
             {
                 throw new ArgumentException("Izmereno prosuto (kanta) nije uneto.");
             }

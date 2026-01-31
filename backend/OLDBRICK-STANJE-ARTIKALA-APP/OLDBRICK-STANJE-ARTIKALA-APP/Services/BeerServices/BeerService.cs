@@ -67,7 +67,10 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
             var dto = await _prosutoService.GetAllStatesByIdNaloga(idNaloga);
 
             if (dto?.Items == null || dto.Items.Count == 0)
-                throw new ArgumentException("Nema stavki za upis manjka.");
+            {
+                
+                return;
+            }
 
             // ✅ Ako već postoji transakcija (npr. update flow), ne otvaraj novu
             var hasOuterTx = _context.Database.CurrentTransaction != null;

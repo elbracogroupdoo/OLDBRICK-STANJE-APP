@@ -436,8 +436,22 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 await _context.SaveChangesAsync();
                 await tx.CommitAsync();
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine("=== DELETE FAILED ===");
+                Console.WriteLine(ex.ToString()); // ispisuje stack + inner chain
+
+                var e = ex;
+                int depth = 0;
+                while (e != null)
+                {
+                    Console.WriteLine($"--- INNER {depth} ---");
+                    Console.WriteLine(e.GetType().FullName);
+                    Console.WriteLine(e.Message);
+                    e = e.InnerException;
+                    depth++;
+                }
+
                 await tx.RollbackAsync();
                 throw;
             }
