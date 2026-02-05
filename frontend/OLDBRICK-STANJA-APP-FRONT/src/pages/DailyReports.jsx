@@ -162,16 +162,19 @@ function DailyReports() {
 
   return (
     <div className="pt-20 px-4 relative">
-      <button
-        type="button"
-        onClick={openInventoryModal}
-        className="absolute top-20 right-4 h-10 rounded-lg bg-blue-500 px-4 text-sm font-semibold text-white
-               transition hover:bg-blue-600"
-      >
-        Popis
-      </button>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 className="text-xl font-semibold text-white">
+          KREIRAJ DNEVNI NALOG
+        </h1>
 
-      <h1 className="text-xl font-semibold text-white">KREIRAJ DNEVNO NALOG</h1>
+        <button
+          type="button"
+          onClick={openInventoryModal}
+          className="h-10 rounded-lg bg-blue-500 px-4 text-sm font-semibold text-white transition hover:bg-blue-600"
+        >
+          Popis
+        </button>
+      </div>
 
       <div className="pt-20 px-4">
         <div className="mt-4">

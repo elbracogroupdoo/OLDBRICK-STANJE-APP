@@ -78,6 +78,19 @@ function Navbar() {
           >
             Unesi stanje
           </NavLink>
+          <NavLink
+            to="/all-reports"
+            className={({ isActive }) =>
+              [
+                "rounded-lg px-3 py-2 text-sm transition hover:bg-white/10",
+                isActive
+                  ? "bg-white/10 text-[#FACC15] font-medium"
+                  : "text-white/80",
+              ].join(" ")
+            }
+          >
+            Pogledaj sve
+          </NavLink>
 
           {/* AUTH */}
           <button
@@ -172,6 +185,21 @@ function Navbar() {
               }
             >
               Unesi stanje
+            </NavLink>
+
+            <NavLink
+              to="/all-reports"
+              onClick={() => setOpen(false)}
+              className={({ isActive }) =>
+                [
+                  "rounded-xl px-4 py-4 text-base transition hover:bg-white/10",
+                  isActive
+                    ? "bg-white/10 text-[#FACC15] font-medium"
+                    : "text-white/80",
+                ].join(" ")
+              }
+            >
+              Pogledaj sve
             </NavLink>
 
             {/* AUTH */}

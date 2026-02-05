@@ -10,6 +10,7 @@ import DailyReports from "./pages/DailyReports.jsx";
 import DayBeforeReports from "./pages/DayBeforeReports.jsx";
 import LastWeekReports from "./pages/LastWeekReports.jsx";
 import ReportDetails from "./components/ReportDetails.jsx";
+import AllReports from "./pages/AllReports.jsx";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
         <Route path="/daily-reports" element={<DailyReports />} />
         <Route path="/weekly-reports" element={<LastWeekReports />} />
         <Route path="/report-details" element={<ReportDetails />} />
+        <Route path="/all-reports" element={<AllReports />} />
       </Routes>
     </div>
   );

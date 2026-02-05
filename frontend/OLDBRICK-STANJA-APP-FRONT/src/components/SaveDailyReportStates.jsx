@@ -310,25 +310,26 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved }) {
   return (
     <div className="mt-4">
       {/* Trigger button */}
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3 items-center">
         <button
           type="button"
           onClick={() => setShowModal(true)}
           disabled={!idNaloga}
-          className="rounded-lg px-4 py-2 text-sm font-medium bg-yellow-400 text-black transition disabled:opacity-50"
+          className="w-full max-w-md rounded-lg px-4 py-2 text-lg font-medium bg-yellow-400 text-black transition disabled:opacity-50"
         >
           Unesi dnevno stanje
         </button>
+
         <button
           onClick={openEditModal}
-          className="rounded-lg px-4 py-2 text-sm font-medium bg-yellow-400 text-black transition disabled:opacity-50"
+          className="w-full max-w-md rounded-lg px-4 py-2 text-lg font-medium bg-yellow-400 text-black transition disabled:opacity-50"
         >
           Izmeni dnevno stanje
         </button>
 
         <button
           onClick={handleDelete}
-          className="rounded-lg px-4 py-2 text-sm font-medium bg-red-500 text-white transition hover:bg-red-600"
+          className="w-full max-w-md rounded-lg px-4 py-2 text-lg font-medium bg-red-500 text-white transition hover:bg-red-600"
         >
           Obriši nalog
         </button>
