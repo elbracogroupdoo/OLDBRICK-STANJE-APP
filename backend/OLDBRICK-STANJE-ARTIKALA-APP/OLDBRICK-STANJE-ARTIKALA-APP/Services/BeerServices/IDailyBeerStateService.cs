@@ -13,5 +13,10 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
 
         Task DeleteReportAsync(int idNaloga);
         Task<ProsutoResultDto> UpdateStatesAndRecalculateAsync(int idNaloga, List<UpdateDailyBeerStateDto> items);
+
+        Task<DailyCleaningSnapshot> UpsertCleaningSnapshotAsync(UpsertCleaningSnapshotDto dto);
+
+        Task<List<DailyCleaningSnapshot>> UpsertCleaningSnapshotsBatchAsync(
+           UpsertCleaningSnapshotBatchDto dto);
     }
 }

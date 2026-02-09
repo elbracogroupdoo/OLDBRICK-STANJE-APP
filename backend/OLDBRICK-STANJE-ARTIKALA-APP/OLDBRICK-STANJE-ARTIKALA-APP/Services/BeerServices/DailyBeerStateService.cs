@@ -540,6 +540,89 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
 
         }
 
+        public async Task<DailyCleaningSnapshot> UpsertCleaningSnapshotAsync(UpsertCleaningSnapshotDto dto)
+        {
+            if (dto.IdNaloga <= 0) throw new ArgumentException("IdNaloga nije validan.");
+            if (dto.IdPiva <= 0) throw new ArgumentException("IdPiva nije validan.");
+            if (dto.BrojacStart < 0) throw new ArgumentException("BrojacStart ne moze biti negativan.");
+
+            var existing = await _context.DailyCleaningSnapshots.FirstOrDefaultAsync
+                (x => x.IdNaloga == dto.IdNaloga && x.IdPiva == dto.IdPiva); 
+
+            if(existing == null)
+            {
+                var row = new DailyCleaningSnapshot
+                {
+                    IdPiva = dto.IdPiva,
+                    IdNaloga = dto.IdNaloga,
+                    Datum = dto.Datum,
+                    BrojacStartAfterCleaning = dto.BrojacStart
+                };
+                _context.DailyCleaningSnapshots.Add(row);
+                await _context.SaveChangesAsync();
+                return row;
+            }
+            else
+            {
+                existing.BrojacStartAfterCleaning = dto.BrojacStart;
+                await _context.SaveChangesAsync();
+                return existing;
+            }
+        }
+
+        public async Task<List<DailyCleaningSnapshot>> UpsertCleaningSnapshotsBatchAsync(
+           UpsertCleaningSnapshotBatchDto dto)
+        {
+
+            if (dto.Items == null || dto.Items.Count == 0)
+                throw new ArgumentException("Items je prazan.");
+
+            var normalized = dto.Items.GroupBy(x => x.IdPiva).Select(g => g.Last()).ToList();
+
+            foreach(var item in normalized)
+            {
+               
+                if (item.IdPiva <= 0) throw new ArgumentException("IdPiva nije validan.");
+                if (item.BrojacStart < 0) throw new ArgumentException("BrojacStart ne moze biti negativan.");
+            }
+
+            var beerIds = normalized.Select(x => x.IdPiva).Distinct().ToList();
+
+            await using var tx = await _context.Database.BeginTransactionAsync();
+
+            var existingRows = await _context.DailyCleaningSnapshots
+                        .Where(x => x.IdNaloga == dto.IdNaloga && beerIds.Contains(x.IdPiva))
+                        .ToListAsync();
+
+            var existingMap = existingRows.ToDictionary(x => x.IdPiva);
+
+            var touched = new List<DailyCleaningSnapshot>();
+
+            foreach(var item in normalized)
+            {
+                if(existingMap.TryGetValue(item.IdPiva, out var existing))
+                {
+                    existing.BrojacStartAfterCleaning = item.BrojacStart;
+                    touched.Add(existing);
+                }
+                else
+                {
+                    var row = new DailyCleaningSnapshot
+                    {
+                        IdPiva = item.IdPiva,
+                        IdNaloga = dto.IdNaloga,
+                        Datum = dto.Datum,
+                        BrojacStartAfterCleaning = item.BrojacStart
+                    };
+                    _context.DailyCleaningSnapshots.Add(row);
+                    touched.Add(row);
+                }
+            }
+            await _context.SaveChangesAsync();
+            await tx.CommitAsync();
+            return touched;
+        }
+
 
 
     }

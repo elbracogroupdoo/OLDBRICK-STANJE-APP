@@ -295,6 +295,22 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
             return Ok(dates);
         }
 
+        [HttpPost("cleaning-snapshots-upsert")]
+        public async Task<ActionResult<DailyCleaningSnapshot>>
+            UpsertCleaningSnapshots([FromBody] UpsertCleaningSnapshotDto dto)
+        {
+            var items = await _stateService.UpsertCleaningSnapshotAsync(dto);
+            return Ok(items);
+        }
+
+        [HttpPost("cleaning-snapshots-upsert-batch")]
+        public async Task<ActionResult<List<DailyCleaningSnapshot>>> UpsertBatch(
+       [FromBody] UpsertCleaningSnapshotBatchDto dto)
+        {
+            var saved = await _stateService.UpsertCleaningSnapshotsBatchAsync(dto);
+            return Ok(saved);
+        }
+
     }
 
     

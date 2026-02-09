@@ -82,6 +82,24 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                         return (Vaga: last.IzmerenoSnapshot, Pos: last.PosSnapshot);
                     });
 
+
+            var cleaningRows = await _context.DailyCleaningSnapshots
+                        .AsNoTracking()
+                        .Where(x => x.IdNaloga == idNaloga && beerIds.Contains(x.IdPiva))
+                        .Select(x => new
+                        {
+                            x.IdPiva,
+                            x.BrojacStartAfterCleaning,
+                            x.Id
+                        })
+                        .ToListAsync();
+
+            var cleaningByBeerId = cleaningRows
+                .GroupBy(x => x.IdPiva)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(z => z.Id).First().BrojacStartAfterCleaning
+                );
             // =========================
             // 1) Poslednji popis PRE ovog dana (baseline)
             // =========================
@@ -172,6 +190,10 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                         startVaga = s.Izmereno;
                         startPos = s.StanjeUProgramu;
                     }
+                }
+                if(cleaningByBeerId.TryGetValue(s.IdPiva, out var cleaningStart))
+                {
+                    startVaga = cleaningStart;
                 }
 
                 var endVaga = s.Izmereno;
@@ -322,6 +344,24 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
             var yStartUtc = new DateTime(yesterday.Year, yesterday.Month, yesterday.Day, 0, 0, 0, DateTimeKind.Utc);
             var yEndUtc = yStartUtc.AddDays(1);
 
+            var cleaningRows = await _context.DailyCleaningSnapshots
+                        .AsNoTracking()
+                        .Where(x => x.IdNaloga == idNaloga && beerIds.Contains(x.IdPiva))
+                        .Select(x => new
+                        {
+                            x.IdPiva,
+                            x.BrojacStartAfterCleaning,
+                            x.Id
+                        })
+                        .ToListAsync();
+
+            var cleaningByBeerId = cleaningRows
+                .GroupBy(x => x.IdPiva)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(z => z.Id).First().BrojacStartAfterCleaning
+                );
+
             var lastRestart = await _context.InventoryResets
                 .AsNoTracking()
                 .Where(x => x.DatumPopisa >= yStartUtc && x.DatumPopisa < yEndUtc)
@@ -403,6 +443,11 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                     vagaStart = prev?.Izmereno ?? current.Izmereno;
                     posStart = prev?.StanjeUProgramu ?? current.StanjeUProgramu;
                 }
+                if (cleaningByBeerId.TryGetValue(current.IdPiva, out var cleaningStart))
+                {
+                    vagaStart = cleaningStart;
+                }
+
 
                 float vagaEnd = current.Izmereno;
                 float posEnd = current.StanjeUProgramu;
@@ -632,6 +677,24 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
             var yStartUtc = new DateTime(yesterday.Year, yesterday.Month, yesterday.Day, 0, 0, 0, DateTimeKind.Utc);
             var yEndUtc = yStartUtc.AddDays(1);
 
+            var cleaningRows = await _context.DailyCleaningSnapshots
+                    .AsNoTracking()
+                    .Where(x => x.IdNaloga == idNaloga && beerIds.Contains(x.IdPiva))
+                    .Select(x => new
+                    {
+                        x.IdPiva,
+                        x.BrojacStartAfterCleaning,
+                        x.Id
+                 })
+                 .ToListAsync();
+
+            var cleaningByBeerId = cleaningRows
+                .GroupBy(x => x.IdPiva)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.OrderByDescending(z => z.Id).First().BrojacStartAfterCleaning
+                );
+
             var lastRestart = await _context.InventoryResets
                 .AsNoTracking()
                 .Where(x => x.DatumPopisa >= yStartUtc && x.DatumPopisa < yEndUtc)
@@ -692,6 +755,11 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
 
                     startVaga = prev?.Izmereno ?? s.Izmereno;
                     startPos = prev?.StanjeUProgramu ?? s.StanjeUProgramu;
+                }
+
+                if (cleaningByBeerId.TryGetValue(s.IdPiva, out var cleaningStart))
+                {
+                    startVaga = cleaningStart;
                 }
 
                 var endVaga = s.Izmereno;
