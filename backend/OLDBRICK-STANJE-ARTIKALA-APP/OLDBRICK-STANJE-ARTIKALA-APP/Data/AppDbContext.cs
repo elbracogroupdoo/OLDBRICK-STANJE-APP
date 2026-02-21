@@ -218,6 +218,18 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Data
                 e.Property(e => e.CreatedAt).HasColumnName("created_at").
                 HasDefaultValueSql("now()").ValueGeneratedOnAdd();
             });
+
+            modelBuilder.Entity<DailyReportTotalsCache>(e =>
+            {
+                e.ToTable("DailyReportTotalsCache");
+                e.HasKey(e => e.IdNaloga);
+                e.Property(e => e.IdNaloga).HasColumnName("IdNaloga");
+                e.Property(e => e.TotalVagaPotrosnja).HasColumnName("TotalVagaPotrosnja");
+                e.Property(e => e.TotalPosPotrosnja).HasColumnName("TotalPosPotrosnja");
+                e.Property(e => e.TotalProsuto).HasColumnName("TotalProsuto");
+                e.Property(e => e.CalculatedAt).HasColumnName("CalculatedAt");
+                e.Property(e => e.TotalProsutoPoApp).HasColumnName("TotalProsutoPoApp");
+            });
         }
     }
 }

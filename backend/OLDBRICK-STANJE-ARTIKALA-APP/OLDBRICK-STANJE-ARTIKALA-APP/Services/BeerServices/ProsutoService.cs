@@ -598,6 +598,11 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                     vagaPotrosnja = startVaga - endVaga;
                     posPotrosnja = startPos - endPos;
                 }
+                else if (tip == "kafa")
+                {
+                    vagaPotrosnja = startVaga - endVaga;
+                    posPotrosnja = startPos - endPos;
+                }
                 else if (tip == "kesa")
                 {
                     vagaPotrosnja = endVaga - startVaga;

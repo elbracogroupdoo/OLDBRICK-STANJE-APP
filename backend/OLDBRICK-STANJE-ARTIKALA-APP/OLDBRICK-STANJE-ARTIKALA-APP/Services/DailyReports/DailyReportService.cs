@@ -371,6 +371,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 .ThenByDescending(x => x.Id)
                 .FirstOrDefaultAsync();
 
+            List<DayBeforeStateDto> result;
             // Ako je prethodni dan bio POPIS, vracamo snapshot iz inventory_reset_items
             if (restartThatDay != null)
             {
@@ -391,24 +392,50 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                     .ToListAsync();
 
                 return snapshot;
+            }else
+            {
+                // 2) Inace: klasika TAB3 za prethodni nalog
+                 result = await _context.DailyBeerStates
+                    .AsNoTracking()
+                    .Where(s => s.IdNaloga == prevIdNaloga)
+                    .Join(_context.Beers,
+                        s => s.IdPiva,
+                        b => b.Id,
+                        (s, b) => new DayBeforeStateDto
+                        {
+                            IdPiva = s.IdPiva,
+                            NazivPiva = b.NazivPiva,
+                            TipMerenja = b.TipMerenja,
+                            PrevVaga = s.Izmereno,
+                            PrevPos = s.StanjeUProgramu
+                        })
+                    .ToListAsync();
+            }
+            var cleaningRows = await _context.DailyCleaningSnapshots.AsNoTracking()
+                .Where(x => x.IdNaloga == idNaloga).Select(x => new
+                {
+                    x.IdPiva,
+                    x.BrojacStartAfterCleaning,
+                    x.CreatedAt
+                }).ToListAsync();
+
+            if (cleaningRows.Count > 0)
+            {
+                var latestCleaningByBeer = cleaningRows
+                    .GroupBy(x => x.IdPiva)
+                    .ToDictionary(g => g.Key,
+                    g => g.OrderByDescending(x => x.CreatedAt).First().BrojacStartAfterCleaning);
+
+                foreach( var dto in result)
+                {
+                    if (latestCleaningByBeer.TryGetValue(dto.IdPiva, out var brojacStart))
+                    {
+                        dto.PrevVaga = brojacStart;
+                    }
+                }
             }
 
-            // 2) Inace: klasika TAB3 za prethodni nalog
-            var result = await _context.DailyBeerStates
-                .AsNoTracking()
-                .Where(s => s.IdNaloga == prevIdNaloga)
-                .Join(_context.Beers,
-                    s => s.IdPiva,
-                    b => b.Id,
-                    (s, b) => new DayBeforeStateDto
-                    {
-                        IdPiva = s.IdPiva,
-                        NazivPiva = b.NazivPiva,
-                        TipMerenja = b.TipMerenja,
-                        PrevVaga = s.Izmereno,
-                        PrevPos = s.StanjeUProgramu
-                    })
-                .ToListAsync();
+               
 
             return result;
         }
