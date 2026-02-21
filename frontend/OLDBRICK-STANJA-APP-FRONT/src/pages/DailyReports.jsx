@@ -242,6 +242,7 @@ function DailyReports() {
         <SaveDailyReportStates
           idNaloga={idNaloga}
           onDelete={handleDeleteNalog}
+          refreshKey={refreshKey}
           onSaved={() => setRefreshKey((k) => k + 1)}
           onBusyStart={begin}
           onBusyEnd={end}

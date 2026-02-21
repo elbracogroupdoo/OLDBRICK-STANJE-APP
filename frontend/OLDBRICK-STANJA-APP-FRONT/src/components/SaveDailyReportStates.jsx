@@ -17,7 +17,7 @@ import {
 import ProsutoKantaForm from "./ProsutoKantaForm";
 import AddQuantityBatch from "./AddQuantityBatch";
 
-function SaveDailyReportStates({ idNaloga, onDelete, onSaved }) {
+function SaveDailyReportStates({ idNaloga, onDelete, onSaved, refreshKey }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(false);
   const [values, setValues] = useState({});
@@ -32,6 +32,8 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved }) {
   const [dayBeforeState, setDayBeforeState] = useState([]);
   const [prevMap, setPrevMap] = useState({});
   const [statusPopupOpen, setStatusPopupOpen] = useState(false);
+
+  console.log("SaveDailyReportStates refreshKey:", refreshKey);
 
   function handleChange(idPiva, field, value) {
     setValues((prev) => ({
@@ -68,6 +70,7 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved }) {
   }
 
   async function handleSave() {
+    console.log("[BTN] handleSave CALLED", { idNaloga, mode });
     setLoading(true);
     setStatusMessage("");
 
@@ -88,6 +91,12 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved }) {
         );
 
       console.log("[SAVE] postDailyReportStates payload:", dataToSend);
+      console.log(
+        "[SAVE] payload sample",
+        dataToSend[0],
+        "keys:",
+        Object.keys(dataToSend[0] ?? {}),
+      );
       await postDailyReportStates(idNaloga, dataToSend);
       console.log("[SAVE] postDailyReportStates OK");
 
@@ -159,6 +168,8 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved }) {
     }
   }
   async function handleUpdateSave() {
+    console.log("[BTN] handleSave CALLED", { idNaloga, mode });
+    console.log("[BTN] handleUpdateSave CALLED", { idNaloga, mode });
     console.log("EDIT MODE:", mode);
     console.log("VALUES STATE:", values);
 
@@ -172,7 +183,12 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved }) {
         stanjeUProgramu:
           v.stanjeUProgramu === "" ? null : Number(v.stanjeUProgramu),
       }));
-
+      console.log(
+        "[UPDATE] payload sample",
+        payload[0],
+        "keys:",
+        Object.keys(payload[0] ?? {}),
+      );
       const result = await updateDailyReportStatusAndCalculate(
         idNaloga,
         payload,
@@ -245,6 +261,7 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved }) {
   }, [idNaloga]);
 
   useEffect(() => {
+    console.log("REFETCH daybefore", { idNaloga, refreshKey });
     if (!idNaloga) return;
 
     getDayBeforeStates(idNaloga)
@@ -254,7 +271,7 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved }) {
         setPrevMap(map);
       })
       .catch(console.error);
-  }, [idNaloga]);
+  }, [idNaloga, refreshKey]);
 
   const STORAGE_KEY = `daily-values-${idNaloga}`;
 
@@ -270,6 +287,13 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(values));
     } catch {}
   }, [values, idNaloga]);
+
+  useEffect(() => {
+    setMode("create");
+    setValues({});
+    setProsutoKanta("");
+    setMsg("");
+  }, [idNaloga]);
 
   const articleOrder = [
     "Stara cigla svetla",
