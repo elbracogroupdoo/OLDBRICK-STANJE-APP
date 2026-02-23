@@ -298,7 +298,7 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved, refreshKey }) {
   const articleOrder = [
     "Stara cigla svetla",
     "Stara cigla IPA",
-    "Nektar",
+    // "Nektar",
     "Haineken",
     "Paulaner svetli",
     "Paulaner psenica",
@@ -310,16 +310,22 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved, refreshKey }) {
   ];
 
   const displayArticles = React.useMemo(() => {
-    return [...articles].sort((a, b) => {
-      const ia = articleOrder.indexOf(a.nazivPiva);
-      const ib = articleOrder.indexOf(b.nazivPiva);
+    return (
+      [...articles]
+        // 1) piva koja ne zelim
+        .filter((a) => a.nazivPiva !== "Nektar" && a.id !== 2)
 
-      if (ia === -1 && ib === -1) return 0;
-      if (ia === -1) return 1;
-      if (ib === -1) return -1;
+        .sort((a, b) => {
+          const ia = articleOrder.indexOf(a.nazivPiva);
+          const ib = articleOrder.indexOf(b.nazivPiva);
 
-      return ia - ib;
-    });
+          if (ia === -1 && ib === -1) return 0;
+          if (ia === -1) return 1;
+          if (ib === -1) return -1;
+
+          return ia - ib;
+        })
+    );
   }, [articles]);
   const isKesa = items.tipmerenja;
 
