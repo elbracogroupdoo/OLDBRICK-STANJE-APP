@@ -57,7 +57,9 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP
                                 return true;
 
                             //  bilo koji localhost port (DEV)
-                            if (origin.StartsWith("http://localhost"))
+                            if (origin.StartsWith("http://localhost") || origin.StartsWith("https://localhost"))
+                                return true;
+                            if (origin.StartsWith("http://192.168.") || origin.StartsWith("https://192.168."))
                                 return true;
 
                             return false;
