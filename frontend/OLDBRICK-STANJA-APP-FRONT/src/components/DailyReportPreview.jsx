@@ -23,7 +23,10 @@ function DailyReportPreview({
   const [shortagePerBeer, setShortagePerBeer] = useState([]);
 
   const calculated = data?.totalProsuto != null;
-  onCalculatedChange?.(!!calculated);
+
+  useEffect(() => {
+    onCalculatedChange?.(!!calculated);
+  }, [calculated, onCalculatedChange]);
 
   useEffect(() => {
     if (!datum) return;

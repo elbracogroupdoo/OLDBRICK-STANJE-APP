@@ -51,6 +51,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Data
                 .ValueGeneratedOnAdd();
                 e.Property(e => e.NazivPiva).HasColumnName("naziv_piva");
                 e.Property(e => e.TipMerenja).HasColumnName("tip_merenja");
+                e.Property(e => e.IsActive).HasColumnName("isActive");
             });
 
             modelBuilder.Entity<DailyReport>(e =>

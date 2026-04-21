@@ -327,9 +327,15 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 .ToListAsync();
 
             var beerIds = currentStates.Select(x => x.IdPiva).Distinct().ToList();
-            var tipByBeerId = await _context.Beers
-                .Where(b => beerIds.Contains(b.Id))
-                .ToDictionaryAsync(b => b.Id, b => b.TipMerenja);
+            var beerMetaById = await _context.Beers
+                    .Where(b => beerIds.Contains(b.Id))
+                 .ToDictionaryAsync(
+                     b => b.Id,
+                     b => new
+                     {
+                         b.TipMerenja,
+                         b.IsActive
+                     });
 
             var restockArticles = await _context.Restocks
                 .Where(r => r.IdNaloga == idNaloga)
@@ -452,10 +458,10 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 float vagaEnd = current.Izmereno;
                 float posEnd = current.StanjeUProgramu;
 
-                if (!tipByBeerId.TryGetValue(current.IdPiva, out var tipRaw))
+                if (!beerMetaById.TryGetValue(current.IdPiva, out var beerMeta))
                     throw new ArgumentException($"Pivo sa ID {current.IdPiva} ne postoji u TAB1.");
 
-                var tip = (tipRaw ?? "").Trim().ToLower();
+                var tip = (beerMeta.TipMerenja ?? "").Trim().ToLower();
 
                 float vagaPotrosnja;
                 float posPotrosnja;
@@ -472,7 +478,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 }
                 else
                 {
-                    throw new ArgumentException($"Nepoznat tip merenja: '{tipRaw}' za pivo ID {current.IdPiva}");
+                    throw new ArgumentException($"Nepoznat tip merenja: '{tip}' za pivo ID {current.IdPiva}");
                 }
 
                 var odstupanje = posPotrosnja - vagaPotrosnja;
@@ -491,7 +497,8 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                     PosPotrosnja = posPotrosnja,
 
                     Odstupanje = odstupanje,
-                    TipMerenja = tip
+                    TipMerenja = tip,
+                    IsActive = beerMeta.IsActive
                 });
             }
 

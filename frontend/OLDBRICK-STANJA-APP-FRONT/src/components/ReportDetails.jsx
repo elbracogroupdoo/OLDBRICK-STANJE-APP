@@ -41,18 +41,19 @@ function ReportDetails({ items, totals, sinceLastInventory, shortagePerBeer }) {
   const sortedItems = useMemo(() => {
     const getIndex = (naziv) => {
       const key = (naziv ?? "").toLowerCase().trim();
-      return orderMap.has(key) ? orderMap.get(key) : 9999; // nepoznati idu na kraj
+      return orderMap.has(key) ? orderMap.get(key) : 9999;
     };
 
-    return [...items].sort((a, b) => {
-      const ai = getIndex(a.nazivPiva);
-      const bi = getIndex(b.nazivPiva);
+    return [...items]
+      .filter((x) => x.isActive)
+      .sort((a, b) => {
+        const ai = getIndex(a.nazivPiva);
+        const bi = getIndex(b.nazivPiva);
 
-      if (ai !== bi) return ai - bi;
+        if (ai !== bi) return ai - bi;
 
-      // fallback: ako nisu u listi ili su isti index, sortiraj po nazivu
-      return (a.nazivPiva ?? "").localeCompare(b.nazivPiva ?? "");
-    });
+        return (a.nazivPiva ?? "").localeCompare(b.nazivPiva ?? "");
+      });
   }, [items, orderMap]);
 
   return (

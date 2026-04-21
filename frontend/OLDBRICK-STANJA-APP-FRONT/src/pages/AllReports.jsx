@@ -147,11 +147,13 @@ function AllReports() {
 
   const items = displayData?.items ?? [];
 
-  const sortedItems = [...items].sort((a, b) => {
-    const aIndex = orderMap[a.nazivPiva] ?? Number.MAX_SAFE_INTEGER;
-    const bIndex = orderMap[b.nazivPiva] ?? Number.MAX_SAFE_INTEGER;
-    return aIndex - bIndex;
-  });
+  const sortedItems = [...items]
+    .filter((item) => item.isActive)
+    .sort((a, b) => {
+      const aIndex = orderMap[a.nazivPiva] ?? Number.MAX_SAFE_INTEGER;
+      const bIndex = orderMap[b.nazivPiva] ?? Number.MAX_SAFE_INTEGER;
+      return aIndex - bIndex;
+    });
 
   const showOverlay = loadingData || loadingTotals;
 

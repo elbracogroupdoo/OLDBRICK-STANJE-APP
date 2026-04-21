@@ -310,22 +310,18 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved, refreshKey }) {
   ];
 
   const displayArticles = React.useMemo(() => {
-    return (
-      [...articles]
-        // 1) piva koja ne zelim
-        .filter((a) => a.nazivPiva !== "Nektar" && a.id !== 2)
+    return [...articles]
+      .filter((a) => a.isActive)
+      .sort((a, b) => {
+        const ia = articleOrder.indexOf(a.nazivPiva);
+        const ib = articleOrder.indexOf(b.nazivPiva);
 
-        .sort((a, b) => {
-          const ia = articleOrder.indexOf(a.nazivPiva);
-          const ib = articleOrder.indexOf(b.nazivPiva);
+        if (ia === -1 && ib === -1) return 0;
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
 
-          if (ia === -1 && ib === -1) return 0;
-          if (ia === -1) return 1;
-          if (ib === -1) return -1;
-
-          return ia - ib;
-        })
-    );
+        return ia - ib;
+      });
   }, [articles]);
   const isKesa = items.tipmerenja;
 

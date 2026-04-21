@@ -11,6 +11,8 @@ import {
 } from "../api/helpers";
 import SaveDailyReportStates from "../components/SaveDailyReportStates";
 import CleaningSnapshotsModal from "../components/ClearingSnapshotsModal";
+import AddBeerModal from "../components/AddBeerModal";
+import ManageBeersModal from "../components/ManageBeersModal";
 
 function DailyReports() {
   const [datum, setDatum] = useState("");
@@ -32,6 +34,8 @@ function DailyReports() {
   const [kesaBeers, setKesaBeers] = useState([]);
   const [articlesLoading, setArticlesLoading] = useState(false);
   const [isReportCalculated, setIsReportCalculated] = useState(false);
+  const [isAddBeerModalOpen, setIsAddBeerModalOpen] = useState(false);
+  const [isManageBeersModalOpen, setIsManageBeersModalOpen] = useState(false);
 
   const begin = () => setPending((p) => p + 1);
   const end = () => setPending((p) => Math.max(0, p - 1));
@@ -204,6 +208,23 @@ function DailyReports() {
         >
           Pranje
         </button>
+
+        <button
+          type="button"
+          onClick={() => setIsAddBeerModalOpen(true)}
+          className="h-10 rounded-lg bg-emerald-500 px-4 text-sm font-semibold text-white transition hover:bg-emerald-600 disabled:opacity-50"
+        >
+          Dodaj pivo
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setIsManageBeersModalOpen(true)}
+          className="h-10 rounded-lg bg-emerald-500 px-4 text-sm font-semibold text-white transition hover:bg-emerald-600"
+        >
+          Upravljaj artiklima
+        </button>
+
         {/* {cleaningDisabled && idNaloga ? (
           <div className="text-xs text-white/60">
             Pranje može samo na otvorenom nalogu koji nije proračunat.
@@ -309,7 +330,7 @@ function DailyReports() {
               {kesaItems.length > 0 && (
                 <div className="rounded-lg border border-white/10 p-4">
                   <div className="text-white font-semibold mb-3">
-                    KESA (obavezno)
+                    BROJAČ (obavezno)
                   </div>
 
                   {kesaLoading ? (
@@ -434,7 +455,22 @@ function DailyReports() {
           </div>
         </div>
       )}
-      {/* <LoadingOverlay show={isGlobalLoading} text="Učitavam..." /> */}
+      {isAddBeerModalOpen && (
+        <AddBeerModal
+          isOpen={isAddBeerModalOpen}
+          onClose={() => setIsAddBeerModalOpen(false)}
+          onBeerCreated={(beer) => {
+            console.log("Dodato pivo:", beer);
+          }}
+        />
+      )}
+
+      {isManageBeersModalOpen && (
+        <ManageBeersModal
+          isOpen={isManageBeersModalOpen}
+          onClose={() => setIsManageBeersModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

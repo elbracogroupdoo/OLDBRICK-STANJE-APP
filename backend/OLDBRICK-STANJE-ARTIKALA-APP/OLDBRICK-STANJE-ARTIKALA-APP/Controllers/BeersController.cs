@@ -19,8 +19,8 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
             _beerService = beerService;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> CreateBeer([FromBody] CreateBeerRequest requestDto)
+        [HttpPost("addNewBeer")]
+        public async Task<IActionResult> CreateBeer([FromBody] CreateBeerRequestDto requestDto)
         {
             try
             {
@@ -66,6 +66,20 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Controllers
                 .GetBeerShortageTotalsSinceLastInventoryAsync(idNaloga);
 
             return Ok(result);
+        }
+
+        [HttpPut("update-active-states")]
+        public async Task<IActionResult> UpdateActiveStates([FromBody] UpdateBeerActiveStatesRequestDto requestDto)
+        {
+            try
+            {
+                await _beerService.UpdateBeerActiveStatesAsync(requestDto);
+                return NoContent();
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }

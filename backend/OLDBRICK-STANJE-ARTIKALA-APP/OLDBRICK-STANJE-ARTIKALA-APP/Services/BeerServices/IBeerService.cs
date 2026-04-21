@@ -5,12 +5,13 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
 {
     public interface IBeerService
     {
-        Task<Beer> CreateAsync(CreateBeerRequest request);
+        Task<CreateBeerResponseDto> CreateAsync(CreateBeerRequestDto request);
 
         Task<Beer> GetByIdAsync(int id);
-        Task<List<Beer>> GetAllBeersAsync();
+        Task<List<BeerListItemResponseDto>> GetAllBeersAsync();
 
         Task SaveDailyBeerShortageAsync(int idNaloga);
         Task<List<BeerShortageSumDto>> GetBeerShortageTotalsSinceLastInventoryAsync(int idNaloga);
+        Task UpdateBeerActiveStatesAsync(UpdateBeerActiveStatesRequestDto request);
     }
 }

@@ -246,3 +246,13 @@ export async function upsertCleaningSnapshotsBatch({ datum, idNaloga, items }) {
 
   return data;
 }
+
+export async function createBeer(request) {
+  const { data } = await httpClient.post("api/beers/addNewBeer", request);
+
+  return data;
+}
+
+export async function updateBeerActiveStates(request) {
+  await httpClient.put("api/Beers/update-active-states", request);
+}

@@ -16,7 +16,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
             _prosutoService = prosutoService;
         }
 
-        public async Task<Beer> CreateAsync(CreateBeerRequest request)
+        public async Task<CreateBeerResponseDto> CreateAsync(CreateBeerRequestDto request)
         {
             if (string.IsNullOrWhiteSpace(request.NazivPiva))
                 throw new ArgumentException("Naziv piva je obavezan");
@@ -33,7 +33,13 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
             _context.Beers.Add(beer);
             await _context.SaveChangesAsync();
 
-            return beer;
+            return new CreateBeerResponseDto
+            {
+                Id = beer.Id,
+                CreatedAt = beer.CreatedAt,
+                NazivPiva = beer.NazivPiva,
+                TipMerenja = beer.TipMerenja
+            };
         }
 
 
@@ -42,9 +48,18 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
             return await _context.Beers.FindAsync(id);
         }
 
-        public async Task<List<Beer>> GetAllBeersAsync()
+        public async Task<List<BeerListItemResponseDto>> GetAllBeersAsync()
         {
-            return await _context.Beers.OrderBy(b => b.NazivPiva).ToListAsync();
+            return await _context.Beers
+                .OrderBy(b => b.NazivPiva)
+                .Select(b => new BeerListItemResponseDto
+                {
+                    Id = b.Id,
+                    NazivPiva = b.NazivPiva,
+                    TipMerenja = b.TipMerenja,
+                    IsActive = b.IsActive
+                })
+                .ToListAsync();
         }
 
         public async Task SaveDailyBeerShortageAsync(int idNaloga)
@@ -191,6 +206,26 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 .ToListAsync();
 
             return result;
+        }
+
+        public async Task UpdateBeerActiveStatesAsync(UpdateBeerActiveStatesRequestDto request)
+        {
+            if (request == null || request.Beers == null || !request.Beers.Any())
+                throw new ArgumentException("Lista piva je prazna.");
+
+            var beersFromDb = await _context.Beers.ToListAsync();
+
+            foreach (var beer in beersFromDb)
+            {
+                var incomingBeer = request.Beers.FirstOrDefault(x => x.Id == beer.Id);
+
+                if (incomingBeer != null)
+                {
+                    beer.IsActive = incomingBeer.IsActive;
+                }
+            }
+
+            await _context.SaveChangesAsync();
         }
 
     }

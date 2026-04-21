@@ -7,5 +7,6 @@
 
         public string NazivPiva { get; set; } = null!;   // naziv_piva
         public string TipMerenja { get; set; } = null!;  // tip_merenja
+        public bool IsActive { get; set; } = true;
     }
 }
