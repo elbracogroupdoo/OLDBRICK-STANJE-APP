@@ -543,30 +543,33 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
             var beerIds = states.Select(s => s.IdPiva).Distinct().ToList();
 
             var beersRaw = await _context.Beers
-                .Where(b => beerIds.Contains(b.Id))
-                .Select(b => new { b.Id, b.NazivPiva, b.TipMerenja })
-                .ToListAsync();
+    .Where(b => beerIds.Contains(b.Id))
+    .Select(b => new { b.Id, b.NazivPiva, b.TipMerenja, b.IsActive })
+    .ToListAsync();
 
             var beers = beersRaw.Select(b => new
             {
                 b.Id,
                 b.NazivPiva,
-                Tip = ((b.TipMerenja ?? "").Trim().ToLower()) // <-- posle query, bez ToLowerInvariant u SQL-u
+                b.IsActive,
+                Tip = ((b.TipMerenja ?? "").Trim().ToLower())
             }).ToList();
 
             var nazivMap = beers.ToDictionary(x => x.Id, x => x.NazivPiva);
 
             var tipMap = beers.ToDictionary(x => x.Id, x => x.Tip);
 
+            var isActiveMap = beers.ToDictionary(x => x.Id, x => x.IsActive);
+
             // 5) KESA items (kao do sad)
             var kesaItems = beers
-                .Where(b => b.Tip == "kesa")
-                .Select(b => new KesaItemDto
-                {
-                    IdPiva = b.Id,
-                    NazivPiva = b.NazivPiva
-                })
-                .ToList();
+    .Where(b => b.Tip == "kesa" && b.IsActive)
+    .Select(b => new KesaItemDto
+    {
+        IdPiva = b.Id,
+        NazivPiva = b.NazivPiva
+    })
+    .ToList();
 
             var kesaIds = kesaItems.Select(x => x.IdPiva).ToHashSet();
 
@@ -623,14 +626,15 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 var izmerenoSnapshot = s.Izmereno;
                 float posSnapshot;
 
-                if(tip == "kesa")
-                {
-                    if(!kesaOverrideMap.TryGetValue(s.IdPiva, out var posVal))
-                    {
-                        throw new ArgumentException("Morate uneti POS vrednost za sva piva koja se mere iz kese.");
+                var isActive = isActiveMap.TryGetValue(s.IdPiva, out var active) && active;
 
-                        
+                if (tip == "kesa" && isActive)
+                {
+                    if (!kesaOverrideMap.TryGetValue(s.IdPiva, out var posVal))
+                    {
+                        throw new ArgumentException("Morate uneti POS vrednost za sva aktivna piva koja se mere iz kese.");
                     }
+
                     posSnapshot = posVal;
                 }
                 else
