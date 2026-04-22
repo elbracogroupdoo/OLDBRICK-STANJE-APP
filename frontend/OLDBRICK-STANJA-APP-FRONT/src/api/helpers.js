@@ -256,3 +256,15 @@ export async function createBeer(request) {
 export async function updateBeerActiveStates(request) {
   await httpClient.put("api/Beers/update-active-states", request);
 }
+
+export async function getRestockForNalog(idNaloga) {
+  const response = await httpClient.get(
+    `api/restock/nalog/${idNaloga}/restocks`,
+  );
+  return response.data;
+}
+
+export async function deleteRestockById(id) {
+  const response = await httpClient.delete(`/api/restock/delete/${id}`);
+  return response.data;
+}

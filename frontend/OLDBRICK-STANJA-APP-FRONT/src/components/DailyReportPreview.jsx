@@ -10,12 +10,11 @@ import ReportDetails from "./ReportDetails";
 
 function DailyReportPreview({
   datum,
+  idNaloga,
   refreshKey,
-  onidNalogaResolved,
   onCalculatedChange,
 }) {
   const [data, setData] = useState(null);
-  const [idNaloga, setIdNaloga] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
   const [totals, setTotals] = useState(null);
   const [sinceLastInventory, setSinceLastInventory] = useState(null);
@@ -28,23 +27,6 @@ function DailyReportPreview({
     onCalculatedChange?.(!!calculated);
   }, [calculated, onCalculatedChange]);
 
-  useEffect(() => {
-    if (!datum) return;
-
-    setLoading(true);
-    setData(null);
-    setTotals(null);
-    setSinceLastInventory(null);
-    setShortagePerBeer([]);
-    setIdNaloga(null);
-
-    getDailyReportByDateWithBiggerOutput(datum)
-      .then((res) => {
-        setIdNaloga(res.idNaloga);
-        onidNalogaResolved?.(res.idNaloga);
-      })
-      .catch(console.error);
-  }, [datum]);
   useEffect(() => {
     if (!idNaloga) return;
 

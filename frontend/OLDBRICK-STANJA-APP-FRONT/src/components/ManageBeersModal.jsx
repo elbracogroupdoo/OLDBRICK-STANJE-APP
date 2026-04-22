@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getAllArticles, updateBeerActiveStates } from "../api/helpers";
 
-export default function ManageBeersModal({ isOpen, onClose }) {
+export default function ManageBeersModal({ isOpen, onClose, onSaved }) {
   const [beers, setBeers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -46,8 +46,12 @@ export default function ManageBeersModal({ isOpen, onClose }) {
       };
 
       await updateBeerActiveStates(payload);
-      setSuccess(true);
 
+      if (onSaved) {
+        onSaved();
+      }
+
+      setSuccess(true);
       onClose();
     } catch (err) {
       console.error(err);
@@ -93,11 +97,21 @@ export default function ManageBeersModal({ isOpen, onClose }) {
                 key={beer.id}
                 className="flex items-center justify-between rounded-lg border border-white/10 px-4 py-3"
               >
-                <div>
+                {/* LEVA STRANA */}
+                <div className="flex flex-col items-start">
                   <div className="text-white font-medium">{beer.nazivPiva}</div>
-                  <div className="text-sm text-white/50">{beer.tipMerenja}</div>
+                  <div className="text-sm text-white/50">
+                    {beer.tipMerenja === "Kesa"
+                      ? "BROJAČ"
+                      : beer.tipMerenja === "Bure"
+                        ? "VAGA"
+                        : beer.tipMerenja === "Kafa"
+                          ? "KAFA"
+                          : beer.tipMerenja}
+                  </div>
                 </div>
 
+                {/* DESNA STRANA */}
                 <label className="flex items-center gap-2 text-sm text-white/80">
                   <input
                     type="checkbox"

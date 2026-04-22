@@ -246,7 +246,7 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved, refreshKey }) {
 
   useEffect(() => {
     getAllArticles().then(setArticles).catch(console.error);
-  }, []);
+  }, [refreshKey]);
 
   useEffect(() => {
     if (!idNaloga) return;
@@ -400,27 +400,45 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved, refreshKey }) {
               </button>
 
               {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center">
-                  {/* overlay */}
+                <div className="fixed inset-0 ">
                   <div
-                    className="absolute inset-0 bg-black/40"
+                    className="absolute inset-0 bg-black/50 backdrop-blur-sm"
                     onClick={() => setIsModalOpen(false)}
                   />
 
-                  {/* modal box */}
-                  {/* <div className="relative z-10  rounded-xl bg-white p-6 shadow-xl">
-                    <AddQuantityRow idNaloga={idNaloga} articles={articles} />
-                  </div> */}
-                  <div className="relative z-10  rounded-xl bg-black p-6 shadow-xl ">
-                    <AddQuantityBatch
-                      idNaloga={idNaloga}
-                      articles={articles}
-                      onUpdated={refreshStates}
-                    />
+                  <div className="relative z-10 flex min-h-full items-end justify-center p-3 sm:items-center sm:p-6">
+                    <div
+                      className="
+          w-full max-w-4xl
+          max-h-[90vh] overflow-y-auto
+          rounded-2xl border border-white/10
+          bg-[#1f2937] p-4 shadow-2xl
+          sm:p-6
+        "
+                    >
+                      <div className="mb-4 flex items-center justify-between">
+                        <h3 className="text-base font-semibold text-white sm:text-lg">
+                          Dodavanje količina
+                        </h3>
+
+                        <button
+                          type="button"
+                          onClick={() => setIsModalOpen(false)}
+                          className="text-xl text-gray-400 transition hover:text-white"
+                        >
+                          ✕
+                        </button>
+                      </div>
+
+                      <AddQuantityBatch
+                        idNaloga={idNaloga}
+                        articles={articles}
+                        onUpdated={refreshStates}
+                      />
+                    </div>
                   </div>
                 </div>
               )}
-
               <button
                 type="button"
                 onClick={() => setShowModal(false)}

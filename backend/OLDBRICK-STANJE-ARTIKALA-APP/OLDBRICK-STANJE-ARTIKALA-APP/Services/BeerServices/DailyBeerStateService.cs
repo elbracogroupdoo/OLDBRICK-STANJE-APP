@@ -231,24 +231,14 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 .GroupBy(x => x.IdPiva)
                 .ToDictionary(g => g.Key, g => g.First()); // najnoviji
 
-            // 8) Validacija: za svako pivo mora postojati baza juce (reset ili tab3)
-            var missingBase = allBeerIds
-                .Where(id => !prevResetByBeerId.ContainsKey(id) && !prevStateByBeerId.ContainsKey(id))
-                .ToList();
-
-            if (missingBase.Count > 0)
-            {
-                throw new KeyNotFoundException(
-                    $"Ne postoji baza ni u inventory_reset_items ni u TAB3 za prethodni dan (IdNaloga={prevIdNaloga}, Datum={prevDate}) za IdPiva: {string.Join(", ", missingBase)}"
-                );
-            }
+            
 
             using var tx = await _context.Database.BeginTransactionAsync();
 
             var result = new List<DailyBeerState>();
             var nowUtcGlobal = DateTime.UtcNow;
 
-            // 9) KLJUC: iteriramo kroz SVA piva, add je 0 ako nije poslato u body
+            // 8) KLJUC: iteriramo kroz SVA piva, add je 0 ako nije poslato u body
             foreach (var idPiva in allBeerIds)
             {
                 var add = addByBeerId.TryGetValue(idPiva, out var a) ? a : 0f;
@@ -266,18 +256,17 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                     });
                 }
 
-                // Baza od JUCE (prioritet: popis -> TAB3)
-                float baseIzmereno;
-                float basePos;
+                // Baza od JUCE (prioritet: popis -> TAB3) -> ako ga nema dodaj sa 0 vrednostima (znaci da je juce bilo 0)
+                float baseIzmereno = 0;
+                float basePos = 0;
 
                 if (prevResetByBeerId.TryGetValue(idPiva, out var reset))
                 {
                     baseIzmereno = reset.IzmerenoSnapshot;
                     basePos = reset.PosSnapshot;
                 }
-                else
+                else if (prevStateByBeerId.TryGetValue(idPiva, out var st))
                 {
-                    var st = prevStateByBeerId[idPiva];
                     baseIzmereno = st.Izmereno;
                     basePos = st.StanjeUProgramu;
                 }

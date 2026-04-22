@@ -128,6 +128,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP
             builder.Services.AddScoped<IDailyReportService, DailyReportService>();
             builder.Services.AddScoped<IDailyBeerStateService, DailyBeerStateService>();
             builder.Services.AddScoped<IProsutoService, ProsutoService>();
+            builder.Services.AddScoped<IRestockService, RestockService>();
 
             // Auth
             builder.Services.AddAuthentication(options =>

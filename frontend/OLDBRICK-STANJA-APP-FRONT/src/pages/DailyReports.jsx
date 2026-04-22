@@ -469,6 +469,7 @@ function DailyReports() {
         <ManageBeersModal
           isOpen={isManageBeersModalOpen}
           onClose={() => setIsManageBeersModalOpen(false)}
+          onSaved={() => setRefreshKey((k) => k + 1)}
         />
       )}
     </div>
