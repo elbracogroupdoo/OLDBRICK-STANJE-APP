@@ -282,24 +282,27 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
             if (dayBeforeReport == null)
                 return new List<DayBeforeStateDto>();
 
-            var prevDate = dayBeforeReport.Datum;     // DateOnly
+            var prevDate = dayBeforeReport.Datum;
             var prevIdNaloga = dayBeforeReport.IdNaloga;
 
-            // 0) NOVO: snapshot dopune za prethodni nalog -> to je "juce stanje"
-            var snapRows = await _context.DailyRestockSnapshots
-                        .AsNoTracking()
-                        .Where(x => x.IdNaloga == idNaloga && x.SourceIdNaloga == prevIdNaloga)
-                        .Select(x => new
-                        {
-                            x.IdPiva,
-                            x.IzmerenoSnapshot,
-                         x.PosSnapshot,
-                            x.UpdatedAt,
-                            x.CreatedAt
-                        })
-                        .ToListAsync();
+            List<DayBeforeStateDto> result;
 
-            // Ako ima snapshot-a, uzmi najnoviji po pivu (u memoriji)
+            // =========================
+            // 0) DAILY RESTOCK SNAPSHOT (ako postoji)
+            // =========================
+            var snapRows = await _context.DailyRestockSnapshots
+                .AsNoTracking()
+                .Where(x => x.IdNaloga == idNaloga && x.SourceIdNaloga == prevIdNaloga)
+                .Select(x => new
+                {
+                    x.IdPiva,
+                    x.IzmerenoSnapshot,
+                    x.PosSnapshot,
+                    x.UpdatedAt,
+                    x.CreatedAt
+                })
+                .ToListAsync();
+
             if (snapRows.Count > 0)
             {
                 var latestByBeer = snapRows
@@ -317,7 +320,7 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                     .Where(b => beerIds.Contains(b.Id))
                     .ToDictionaryAsync(b => b.Id, b => new { b.NazivPiva, b.TipMerenja });
 
-                var snapshotStates = latestByBeer
+                result = latestByBeer
                     .Select(x => new DayBeforeStateDto
                     {
                         IdPiva = x.IdPiva,
@@ -327,79 +330,87 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                         PrevPos = x.PosSnapshot
                     })
                     .ToList();
+            }
+            else
+            {
+                // =========================
+                // 1) PROVERA POPISA
+                // =========================
+                var prevStartUtc = new DateTime(prevDate.Year, prevDate.Month, prevDate.Day, 0, 0, 0, DateTimeKind.Utc);
+                var prevEndUtc = new DateTime(prevDate.Year, prevDate.Month, prevDate.Day, 23, 59, 59, 999, DateTimeKind.Utc);
 
-                return snapshotStates;
+                var restartThatDay = await _context.InventoryResets
+                    .AsNoTracking()
+                    .Where(x => x.DatumPopisa >= prevStartUtc && x.DatumPopisa <= prevEndUtc)
+                    .OrderByDescending(x => x.DatumPopisa)
+                    .ThenByDescending(x => x.Id)
+                    .FirstOrDefaultAsync();
+
+                if (restartThatDay != null)
+                {
+                    result = await _context.InventoryResetItems
+                        .AsNoTracking()
+                        .Where(i => i.InventoryResetId == restartThatDay.Id)
+                        .Join(_context.Beers,
+                            i => i.IdPiva,
+                            b => b.Id,
+                            (i, b) => new DayBeforeStateDto
+                            {
+                                IdPiva = i.IdPiva,
+                                NazivPiva = b.NazivPiva,
+                                TipMerenja = b.TipMerenja,
+                                PrevVaga = Convert.ToSingle(i.IzmerenoSnapshot),
+                                PrevPos = Convert.ToSingle(i.PosSnapshot)
+                            })
+                        .ToListAsync();
+                }
+                else
+                {
+                    // =========================
+                    // 2) TAB3 (DailyBeerStates)
+                    // =========================
+                    result = await _context.DailyBeerStates
+                        .AsNoTracking()
+                        .Where(s => s.IdNaloga == prevIdNaloga)
+                        .Join(_context.Beers,
+                            s => s.IdPiva,
+                            b => b.Id,
+                            (s, b) => new DayBeforeStateDto
+                            {
+                                IdPiva = s.IdPiva,
+                                NazivPiva = b.NazivPiva,
+                                TipMerenja = b.TipMerenja,
+                                PrevVaga = s.Izmereno,
+                                PrevPos = s.StanjeUProgramu
+                            })
+                        .ToListAsync();
+                }
             }
 
-
-            // 1) Provera: da li je BIO POPIS na taj prethodni datum?
-            // DatumPopisa je timestamptz => pravimo UTC range za ceo dan
-            var prevStartUtc = new DateTime(prevDate.Year, prevDate.Month, prevDate.Day, 0, 0, 0, DateTimeKind.Utc);
-            var prevEndUtc = new DateTime(prevDate.Year, prevDate.Month, prevDate.Day, 23, 59, 59, 999, DateTimeKind.Utc);
-
-            var restartThatDay = await _context.InventoryResets
+            // =========================
+            // 3) CLEANING SNAPSHOT (override VAGA/BROJAČ)
+            // =========================
+            var cleaningRows = await _context.DailyCleaningSnapshots
                 .AsNoTracking()
-                .Where(x => x.DatumPopisa >= prevStartUtc && x.DatumPopisa <= prevEndUtc)
-                .OrderByDescending(x => x.DatumPopisa)
-                .ThenByDescending(x => x.Id)
-                .FirstOrDefaultAsync();
-
-            List<DayBeforeStateDto> result;
-            // Ako je prethodni dan bio POPIS, vracamo snapshot iz inventory_reset_items
-            if (restartThatDay != null)
-            {
-                var snapshot = await _context.InventoryResetItems
-                    .AsNoTracking()
-                    .Where(i => i.InventoryResetId == restartThatDay.Id)
-                    .Join(_context.Beers,
-                        i => i.IdPiva,
-                        b => b.Id,
-                        (i, b) => new DayBeforeStateDto
-                        {
-                            IdPiva = i.IdPiva,
-                            NazivPiva = b.NazivPiva,
-                            TipMerenja = b.TipMerenja,
-                            PrevVaga = Convert.ToSingle(i.IzmerenoSnapshot),
-                            PrevPos = Convert.ToSingle(i.PosSnapshot)
-                        })
-                    .ToListAsync();
-
-                return snapshot;
-            }else
-            {
-                // 2) Inace: klasika TAB3 za prethodni nalog
-                 result = await _context.DailyBeerStates
-                    .AsNoTracking()
-                    .Where(s => s.IdNaloga == prevIdNaloga)
-                    .Join(_context.Beers,
-                        s => s.IdPiva,
-                        b => b.Id,
-                        (s, b) => new DayBeforeStateDto
-                        {
-                            IdPiva = s.IdPiva,
-                            NazivPiva = b.NazivPiva,
-                            TipMerenja = b.TipMerenja,
-                            PrevVaga = s.Izmereno,
-                            PrevPos = s.StanjeUProgramu
-                        })
-                    .ToListAsync();
-            }
-            var cleaningRows = await _context.DailyCleaningSnapshots.AsNoTracking()
-                .Where(x => x.IdNaloga == idNaloga).Select(x => new
+                .Where(x => x.IdNaloga == idNaloga)
+                .Select(x => new
                 {
                     x.IdPiva,
                     x.BrojacStartAfterCleaning,
                     x.CreatedAt
-                }).ToListAsync();
+                })
+                .ToListAsync();
 
             if (cleaningRows.Count > 0)
             {
                 var latestCleaningByBeer = cleaningRows
                     .GroupBy(x => x.IdPiva)
-                    .ToDictionary(g => g.Key,
-                    g => g.OrderByDescending(x => x.CreatedAt).First().BrojacStartAfterCleaning);
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.OrderByDescending(x => x.CreatedAt).First().BrojacStartAfterCleaning
+                    );
 
-                foreach( var dto in result)
+                foreach (var dto in result)
                 {
                     if (latestCleaningByBeer.TryGetValue(dto.IdPiva, out var brojacStart))
                     {
@@ -408,11 +419,8 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 }
             }
 
-               
-
             return result;
         }
-
 
 
         public async Task<PotrosnjaSinceLastInventoryDto> GetTotalsSinceLastInventoryAsync(int idNaloga)
@@ -664,22 +672,22 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.DailyReports
                 .Distinct()
                 .ToListAsync();
             var kesaItems = await _context.Beers
-                .Where(b => beerIds.Contains(b.Id))
+                .Where(b => beerIds.Contains(b.Id) && b.IsActive)
                 .Select(b => new
                 {
                     b.Id,
                     b.NazivPiva,
                     Tip = (b.TipMerenja ?? "").Trim().ToLower()
-                 })
+                })
                 .Where(x => x.Tip == "kesa")
-                 .Select(x => new KesaItemDto
-                 {
-                     IdPiva = x.Id,
-                     NazivPiva = x.NazivPiva
-                 })
-                 .ToListAsync();
-            
-                       return kesaItems;
+                .Select(x => new KesaItemDto
+                {
+                    IdPiva = x.Id,
+                    NazivPiva = x.NazivPiva
+                })
+                .ToListAsync();
+
+            return kesaItems;
 
         }
 

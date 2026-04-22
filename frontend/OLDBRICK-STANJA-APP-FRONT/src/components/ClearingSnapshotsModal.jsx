@@ -23,8 +23,13 @@ function CleaningSnapshotsModal({
     getAllArticles()
       .then((all) => {
         const onlyKesa = (all || [])
-          .filter((x) => (x.tipMerenja || "").toLowerCase() === "kesa")
-          .map((x) => ({ idPiva: x.id, naziv: x.nazivPiva }));
+          .filter(
+            (x) => (x.tipMerenja || "").toLowerCase() === "kesa" && x.isActive,
+          )
+          .map((x) => ({
+            idPiva: x.id,
+            naziv: x.nazivPiva,
+          }));
 
         setBeers(onlyKesa);
       })
