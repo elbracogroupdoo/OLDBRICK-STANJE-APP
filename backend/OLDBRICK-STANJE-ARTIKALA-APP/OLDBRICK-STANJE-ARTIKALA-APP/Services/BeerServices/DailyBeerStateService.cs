@@ -46,6 +46,28 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                 .OrderByDescending(r => r.Datum)
                 .FirstOrDefaultAsync();
 
+                InventoryReset? prevReset = null;
+                Dictionary<int, InventoryResetItem> prevResetMap = new();
+
+            if(prevReport != null)
+            {
+                var prevDayStartUtc = DateTime.SpecifyKind(prevReport.Datum.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+                var prevNextDayStartUtc = DateTime.SpecifyKind(prevReport.Datum.AddDays(1).ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+                 
+                 prevReset = await _context.InventoryResets
+                .Where(r => r.DatumPopisa >= prevDayStartUtc && r.DatumPopisa < prevNextDayStartUtc)
+                .OrderByDescending(r => r.DatumPopisa)
+                .ThenByDescending(r => r.Id)
+                .FirstOrDefaultAsync();
+
+            if (prevReset != null)
+            {
+                prevResetMap = await _context.InventoryResetItems
+                    .Where(i => i.InventoryResetId == prevReset.Id)
+                    .ToDictionaryAsync(i => i.IdPiva);
+            }
+            }
+
             // 3) Prev states map (IdPiva -> state)
             Dictionary<int, DailyBeerState> prevMap = new();
             if (prevReport != null)
@@ -82,8 +104,13 @@ namespace OLDBRICK_STANJE_ARTIKALA_APP.Services.BeerServices
                         throw new ArgumentException("Stanje u programu ne može biti negativno.");
                 }
 
-                var finalIzmereno = dto?.Izmereno ?? prev?.Izmereno ?? 0f;
-                var finalProgram = dto?.StanjeUProgramu ?? prev?.StanjeUProgramu ?? 0f;
+                prevResetMap.TryGetValue(beer.Id, out var prevResetItem);
+
+                var baseIzmereno = prevResetItem?.IzmerenoSnapshot ?? prev?.Izmereno ?? 0f;
+                var baseProgram = prevResetItem?.PosSnapshot ?? prev?.StanjeUProgramu ?? 0f;
+
+                var finalIzmereno = dto?.Izmereno ?? baseIzmereno;
+                var finalProgram = dto?.StanjeUProgramu ?? baseProgram;
 
                 if (!currentMap.TryGetValue(beer.Id, out var existing))
                 {

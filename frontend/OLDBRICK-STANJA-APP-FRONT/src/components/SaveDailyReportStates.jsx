@@ -73,7 +73,26 @@ function SaveDailyReportStates({ idNaloga, onDelete, onSaved, refreshKey }) {
     console.log("[BTN] handleSave CALLED", { idNaloga, mode });
     setLoading(true);
     setStatusMessage("");
+    const debugAllFields = displayArticles.map((b) => {
+      const v = values[b.id];
 
+      return {
+        beerId: b.id,
+        naziv: b.nazivPiva,
+        izmerenoRaw: v?.izmereno,
+        stanjeUProgramuRaw: v?.stanjeUProgramu,
+        izmerenoZaSlanje:
+          v?.izmereno === "" || v?.izmereno == null ? null : Number(v.izmereno),
+        stanjeUProgramuZaSlanje:
+          v?.stanjeUProgramu === "" || v?.stanjeUProgramu == null
+            ? null
+            : Number(v.stanjeUProgramu),
+        prikazaniPrethodniPos: prevMap[b.id]?.prevPos,
+        prikazanaPrethodnaVaga: prevMap[b.id]?.prevVaga,
+      };
+    });
+
+    console.table(debugAllFields);
     try {
       // 1) Payload za piva (filter da ne šalješ NaN)
       const dataToSend = Object.entries(values)
